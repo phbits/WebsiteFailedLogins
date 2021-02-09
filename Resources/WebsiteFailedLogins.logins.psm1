@@ -8,7 +8,7 @@ Function Get-FailedLoginsPerIP
     [OutputType('System.Object[]')]
     [CmdletBinding()]
     param(
-        [parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true)]
         [System.Collections.Hashtable]
         # INI Configuration.
         $IniConfig
@@ -56,7 +56,7 @@ Function Get-TotalFailedLogins
     [CmdletBinding()]
     [OutputType('System.Collections.Hashtable')]
     param(
-        [parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true)]
         [System.Collections.Hashtable]
         # INI Configuration.
         $IniConfig

@@ -12,12 +12,12 @@ Function Assert-ValidIniConfig
     [CmdletBinding()]
     [OutputType('System.Collections.Hashtable')]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
             # INI Configuration.
             $IniConfig
             ,
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [switch]
             # Perform basic checks.
             $RunningConfig
@@ -371,7 +371,23 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] Method
 
-            13 {    # BEGIN validate [SMTP] To
+            13 {    # BEGIN validate [Alert] DataType
+
+                if ([System.String]::IsNullOrEmpty($IniConfig.Alert.DataType) -eq $false)
+                {
+                    if ($IniConfig.Alert.DataType -notmatch "^(?i)text|xml|json$")
+                    {
+                        $returnValue.ErrorMessages += '[Error][Alert] DataType not valid.'
+                    }
+
+                } else {
+
+                    $returnValue.ErrorMessages += '[Error][Alert] DataType not specified.'
+                }
+
+            }       # END validate [Alert] DataType
+
+            14 {    # BEGIN validate [SMTP] To
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -397,7 +413,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] To
 
-            14 {    # BEGIN validate [SMTP] From
+            15 {    # BEGIN validate [SMTP] From
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -423,7 +439,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] From
 
-            15 {    # BEGIN validate [SMTP] Subject
+            16 {    # BEGIN validate [SMTP] Subject
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -455,7 +471,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Subject
 
-            16 {    # BEGIN validate [SMTP] Port
+            17 {    # BEGIN validate [SMTP] Port
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -490,7 +506,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Port
 
-            17 {    # BEGIN validate [SMTP] Server
+            18 {    # BEGIN validate [SMTP] Server
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -525,7 +541,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Server
 
-            18 {    # BEGIN validate [SMTP] CredentialXml
+            19 {    # BEGIN validate [SMTP] CredentialXml
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -556,7 +572,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] CredentialXml
 
-            19 {    # BEGIN validate [WinEvent] Logname
+            20 {    # BEGIN validate [WinEvent] Logname
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -582,7 +598,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Logname
 
-            20 {    # BEGIN validate [WinEvent] Source
+            21 {    # BEGIN validate [WinEvent] Source
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -617,7 +633,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Source
 
-            21 {    # BEGIN validate [WinEvent] EntryType
+            22 {    # BEGIN validate [WinEvent] EntryType
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -641,7 +657,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] EntryType
 
-            22 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
+            23 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -683,7 +699,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] FailedLoginsPerIPEventId
 
-            23 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
+            24 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -725,7 +741,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] TotalFailedLoginsEventId
 
-            24 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
+            25 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -740,7 +756,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
-            25 {    # BEGIN validate IIS Log Access
+            26 {    # BEGIN validate IIS Log Access
 
                     $lpQuery = "SELECT TOP 1 * FROM '$($IniConfig.Website.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'"
 
@@ -787,7 +803,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate IIS Log Access
 
-            26 {    # BEGIN validate [WinEvent] Write Start
+            27 {    # BEGIN validate [WinEvent] Write Start
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -854,7 +870,7 @@ Function Get-IniConfig
     [CmdletBinding()]
     [OutputType('System.Collections.Hashtable')]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [ValidateScript({Test-Path $_})]
             [string]
             # Path to configuration file.
@@ -898,3 +914,5 @@ Function Get-IniConfig
     return $config
 
 } # End Function Get-IniConfig
+
+Export-ModuleMember -Function 'Assert-ValidIniConfig','Get-IniConfig'

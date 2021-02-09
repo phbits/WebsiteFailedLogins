@@ -1,77 +1,49 @@
-
 Function Submit-Alert
 {
     <#
         .SYNOPSIS
 
-            Submits alert to Event Log or via SMTP.
+            Submits alert to Windows Event Log or via SMTP.
     #>
     [CmdletBinding()]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
             # INI Configuration.
             $IniConfig
             ,
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
             # Alert data.
-            $Alert
+            $AlertData
             ,
-            [parameter(Mandatory=$true)]
-            [System.String[]]
-            # Message body.
-            $Message
-            ,
-            [parameter(Mandatory=$false)]
-            [System.String]
-            # Message appended to subject.
-            $SubjectAppend
-            ,
-            [parameter(Mandatory=$false)]
-            [switch]
-            # Defaults to FailedLoginsPerIP. This switch enables TotalFailedLogins.
-            $TotalFailedLogins
-            ,
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [switch]
             # Signifies terminating error.
             $TerminatingError
     )
 
-    if ($IniConfig.Alert.Method -imatch "^(.*)WinEvent(.*)$")
+    if ($IniConfig.Alert.Method -imatch 'WinEvent')
     {
-        if ($TerminatingError)
+        if ($TerminatingError -eq $true)
         {
-            Write-EventAlert -Message $Message -TerminatingError
-
-        } elseif ($TotalFailedLogins)
-        {
-
-            Write-EventAlert -Message $Message -TotalFailedLogins
+            Write-EventAlert -IniConfig $IniConfig -AlertData $AlertData -TerminatingError
 
         } else {
 
-            Write-EventAlert -Message $Message
+            Write-EventAlert -IniConfig $IniConfig -AlertData $AlertData
         }
     }
 
-    if ($IniConfig.Alert.Method -imatch "^(.*)Smtp(.*)$")
+    if ($IniConfig.Alert.Method -imatch 'Smtp')
     {
-        if ($TerminatingError)
+        if ($TerminatingError -eq $true)
         {
-            Send-SmtpAlert -Message $Message -TerminatingError
+            Send-SmtpAlert -IniConfig $IniConfig -AlertData $AlertData -TerminatingError
 
         } else {
 
-            $subject = $IniConfig.Smtp.Subject
-
-            if([System.String]::IsNullOrEmpty($SubjectAppend) -eq $false){
-
-                $subject = '{0} {1}' -f $IniConfig.Smtp.Subject,$SubjectAppend
-            }
-            
-            Send-SmtpAlert -Message $Message -MessageSubject $subject
+            Send-SmtpAlert -IniConfig $IniConfig -AlertData $AlertData
         }
     }
 
@@ -86,56 +58,50 @@ Function Write-EventAlert
     #>
     [CmdletBinding()]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
             # INI Configuration.
             $IniConfig
             ,
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
-            # Alert
-            $Alert
+            # Alert Data.
+            $AlertData
             ,
-            [parameter(Mandatory=$false)]
-            [switch]
-            # Defaults to FailedLoginsPerIP. This switch enables TotalFailedLogins.
-            $TotalFailedLogins
-            ,
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [switch]
             # Signifies terminating error.
             $TerminatingError
     )
 
-    $eventEntryType = $IniConfig.WinEvent.EntryType
+    $eventProperties = @{
+                        'LogName'     = $IniConfig.WinEvent.Logname
+                        'Source'      = $IniConfig.WinEvent.Source
+                        'EntryType'   = $IniConfig.WinEvent.EntryType
+                        'EventId'     = $IniConfig.WinEvent.FailedLoginsPerIPEventId
+                        'ErrorAction' = 'Stop'
+                        'Message'     = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
+                        }
 
-    $eventId = $IniConfig.WinEvent.FailedLoginsPerIPEventId
-
-    if($TotalFailedLogins)
+    if ($AlertData.ContainsKey('TotalFailedLogins'))
     {
-        $eventId = $IniConfig.WinEvent.TotalFailedLoginsEventId
+        $eventProperties.EventId = $IniConfig.WinEvent.TotalFailedLoginsEventId
     }
 
-    if($TerminatingError)
+    if ($TerminatingError)
     {
-        $eventEntryType = 'Error'
-
-        $eventId = 200
+        $eventProperties.EntryType = 'Error'
+        $eventProperties.EventId   = 200
     }
 
     try {
-            Write-EventLog -LogName $IniConfig.WinEvent.Logname `
-                           -Source $IniConfig.WinEvent.Source `
-                           -EntryType $eventEntryType `
-                           -EventId $eventId `
-                           -Message $([System.Management.Automation.PSSerializer]::Serialize($Alert,2)) `
-                           -ErrorAction Stop
+            Write-EventLog @eventProperties
 
     } catch {
         
         $e = $_
-
-        Write-Host $('[Error][Script] Alert Event log write failed. {0}' -f $e.Exception.Message)
+        Write-Host '[Error][Script][Alert] Event log write failed.'
+        Write-Host $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
     }
 
 } # End Function Write-EventAlert
@@ -149,80 +115,99 @@ Function Send-SmtpAlert
     #>
     [CmdletBinding()]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
             # INI Configuration.
             $IniConfig
             ,
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
             [System.Collections.Hashtable]
-            # Alert
-            $Alert
+            # Alert Data.
+            $AlertData
             ,
-            [parameter(Mandatory=$true)]
-            [System.String[]]
-            # Message body.
-            $Message
-            ,
-            [parameter(Mandatory=$false)]
-            [System.String]
-            # Subject for email.
-            $MessageSubject
-            ,
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [switch]
             # Signifies terminating error
             $TerminatingError
     )
 
-    $emailSubject = $IniConfig.Smtp.Subject
+    $emailProperties = @{
+                            'To'          = $IniConfig.Smtp.To
+                            'From'        = $IniConfig.Smtp.From
+                            'Subject'     = $IniConfig.Smtp.Subject
+                            'SmtpServer'  = $IniConfig.Smtp.Server
+                            'Port'        = $IniConfig.Smtp.Port
+                            'Body'        = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
+                            'UseSsl'      = $true
+                            'ErrorAction' = 'Stop'
+                        }
 
-    if([System.String]::IsNullOrEmpty($emailSubject) -eq $false)
+    if ($AlertData.ContainsKey('TotalFailedLogins'))
     {
-        $emailSubject = $MessageSubject
+        $emailProperties.Subject = '[TotalFailedLogins] {0}' -f $IniConfig.Smtp.Subject
     }
 
-    if($TerminatingError)
+    if ($AlertData.ContainsKey('ClientIP'))
     {
-        $emailSubject = '[TerminatingError] {0}' -f $emailSubject
+        $emailProperties.Subject = '[FailedLoginsPerIP] {0}' -f $IniConfig.Smtp.Subject
+    }
+
+    if ($TerminatingError)
+    {
+        $emailProperties.Subject = '[TerminatingError]{0}' -f $emailProperties.Subject
+    }
+
+    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
+    {
+        $emailProperties.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
     }
 
     try {
-
-        if([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml))
-        {
-            Send-MailMessage -To $IniConfig.Smtp.To `
-                             -From $IniConfig.Smtp.From `
-                             -Subject $EmailSubject `
-                             -SmtpServer $IniConfig.Smtp.Server `
-                             -Port $IniConfig.Smtp.Port `
-                             -Body $([System.Management.Automation.PSSerializer]::Serialize($Alert,2)) `
-                             -UseSsl `
-                             -ErrorAction Stop
-
-        } else {
-
-            $creds = Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml
-
-            Send-MailMessage -To $IniConfig.Smtp.To `
-                             -From $IniConfig.Smtp.From `
-                             -Subject $EmailSubject `
-                             -SmtpServer $IniConfig.Smtp.Server `
-                             -Port $IniConfig.Smtp.Port `
-                             -Body $([System.Management.Automation.PSSerializer]::Serialize($Alert,2)) `
-                             -Credential $creds `
-                             -UseSsl `
-                             -ErrorAction Stop
-
-            Remove-Variable -Name creds
-        }
+            Send-MailMessage @eventProperties
 
     } catch {
         
         $e = $_
-
-        Write-Host $('[Error][Script] Alert smtp send failed. {0}' -f $e.Exception.Message)
+        Write-Host '[Error][Script][Alert] Smtp send failed.'
+        Write-Host $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
     }
 
 } # End Function Send-SmtpAlert
 
+Function Get-FormattedAlertData
+{
+    <#
+        .SYNOPSIS
+
+            Formats the alert data into desired format.
+    #>
+    [CmdletBinding()]
+    param(
+            [Parameter(Mandatory=$true)]
+            [System.String]
+            # Data type format.
+            $DataType
+            ,
+            [Parameter(Mandatory=$true)]
+            # Alert Data.
+            $AlertData
+    )
+
+    switch ($DataType.ToUpper())
+    {
+        'XML' {
+                return [System.Management.Automation.PSSerializer]::Serialize($AlertData,2)
+        }
+
+        'JSON' {
+                return $($AlertData | ConvertTo-Json)
+        }
+
+        default { # Text
+                [string[]] $stringData = $AlertData.Keys | ForEach-Object{ "($_) = $($AlertData[$($_)])" }
+                return $($stringData -Join [System.Environment]::NewLine)
+        }
+    }
+} # End Function Get-FormattedAlertData
+
+Export-ModuleMember -Function 'Submit-Alert'

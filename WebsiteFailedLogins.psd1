@@ -26,8 +26,8 @@ FunctionsToExport = 'Invoke-WebsiteFailedLogins',
 					'Get-WebsiteFailedLoginsDefaultConfiguration',
 					'Copy-WebsiteFailedLoginsDefaultConfiguration'
 
-FileList = 'README.md',
-           'LICENSE',
+FileList = 'LICENSE',
+           'README.md',
            'WebsiteFailedLogins.psd1',
            'WebsiteFailedLogins.psm1',
            'Resources\WebsiteFailedLogins.alert.psm1',

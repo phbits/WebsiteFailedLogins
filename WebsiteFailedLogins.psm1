@@ -31,13 +31,13 @@ Function Invoke-WebsiteFailedLogins
     [CmdletBinding()]
     [OutputType('System.String[]')]
     param(
-            [parameter(Mandatory=$true)]
+            [Parameter(Mandatory=$true)]
 			[ValidateScript({Test-Path -LiteralPath $_})]
             [string]
             # Path to configuration file.
             $Configuration
             ,
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [switch]
             # Performs the minimum validation checks against the configuration file. Use this switch after all configuration errors have been resolved.
             $RunningConfig
@@ -62,6 +62,12 @@ Function Invoke-WebsiteFailedLogins
     {
         $returnValue.HasError = $true
         $returnValue.ErrorMessages = $configTestResult.ErrorMessages
+
+        $alertData = $returnValue
+        $alertData.Remove('FailedLoginsPerIP')
+        $alertData.Remove('TotalFailedLogins')
+        
+        Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError
     
     } else {
 
@@ -76,20 +82,8 @@ Function Invoke-WebsiteFailedLogins
 
             foreach ($entry in $resultFailedLoginsPerIP)
             {
-                Submit-Alert -Message $($entry.ClientIP) -SubjectAppend $($entry.ClientIP)
+                Submit-Alert -IniConfig $returnValue.Configuration -AlertData $entry
             }
-            <#
-            for ($i=0; $i -lt $keys.Length; $i++){
-
-                $key = $keys[$i]
-
-                $Global:WFLResults += "# IP Entry $($i + 1) #"
-
-                $hashMsg[$key] | foreach-Object{ $Global:WFLResults += '  {0}' -f $_ }
-
-                Submit-Alert -Message $($hashMsg[$key]) -SubjectAppend $key
-            }
-            #>
         }
 
         # Total Failed Logins
@@ -101,106 +95,13 @@ Function Invoke-WebsiteFailedLogins
 
             $returnValue.HasResults = $true
 
-            Submit-Alert -Message $resultTotalFailedLogins -SubjectAppend 'TotalFailedLogins' -TotalFailedLogins
-            <#
-            $Global:WFLResults += '# Total Failed Logins #'
-            
-            $arrMsg | ForEach-Object{ $Global:WFLResults += '  {0}' -f $_ }
-
-            Submit-Alert -Message $arrMsg -SubjectAppend 'TotalFailedLogins' -TotalFailedLogins
-            #>
+            Submit-Alert -IniConfig $returnValue.Configuration -AlertData $returnValue.TotalFailedLogins
         }
-
-
-
-
-    }
-
-    
-
-
-    if ($IniConfig.Count -le 1)
-    {
-        $ReturnValue.HasError = $true
-
-    } else {
-
-        if ($MinimumValidation)
-        {
-            $ReturnValue.HasError = Confirm-IniConfig -Brief
-    
-        } else {
-        
-            $ReturnValue.HasError = Confirm-IniConfig
-        }
-    }
-
-    if ($ReturnValue.HasError -eq $false)
-    {
-        # Per IP Failed Logins
-        $resultFailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $IniConfig
-
-        if ($resultFailedLoginsPerIP.Count -gt 0)
-        {
-            $returnValue.FailedLoginsPerIP = $resultFailedLoginsPerIP
-
-            $returnValue.HasResults = $true
-
-            foreach ($entry in $resultFailedLoginsPerIP)
-            {
-                Submit-Alert -Message $($entry.ClientIP) -SubjectAppend $($entry.ClientIP)
-            }
-            <#
-            for ($i=0; $i -lt $keys.Length; $i++){
-
-				$key = $keys[$i]
-
-                $Global:WFLResults += "# IP Entry $($i + 1) #"
-
-				$hashMsg[$key] | foreach-Object{ $Global:WFLResults += '  {0}' -f $_ }
-
-				Submit-Alert -Message $($hashMsg[$key]) -SubjectAppend $key
-            }
-            #>
-        }
-
-        # Total Failed Logins
-        $resultTotalFailedLogins = Get-TotalFailedLogins
-
-        if ($resultTotalFailedLogins.Count -gt 0)
-        {
-            $returnValue.TotalFailedLogins = $resultTotalFailedLogins
-
-            $returnValue.HasResults = $true
-
-            Submit-Alert -Message $resultTotalFailedLogins -SubjectAppend 'TotalFailedLogins' -TotalFailedLogins
-            <#
-            $Global:WFLResults += '# Total Failed Logins #'
-            
-            $arrMsg | ForEach-Object{ $Global:WFLResults += '  {0}' -f $_ }
-
-            Submit-Alert -Message $arrMsg -SubjectAppend 'TotalFailedLogins' -TotalFailedLogins
-            #>
-        }
-
-    } else {
-
-        [string[]]$Message = $Global:Ini.Script.ErrorMsg
-
-        $Message += '# Loaded Configuration #'
-
-        #$Message += $(Get-LoadedConfig)
-
-        Write-Output $Message
-
-        Submit-Alert -IniConfig $IniConfig -Message $Message -TerminatingError
     }
 
     return $returnValue
 
 } # End Function Invoke-WebsiteFailedLogins
-
-
 
 Function Get-WebsiteFailedLoginsREADME
 {
@@ -212,7 +113,7 @@ Function Get-WebsiteFailedLoginsREADME
     [OutputType('System.String[]')]
     [CmdletBinding()]
     param( 
-            [parameter(Mandatory=$false)]
+            [Parameter(Mandatory=$false)]
             [System.String]
             # Section to return.
             $SectionKeyword
@@ -268,8 +169,7 @@ Function Get-WebsiteFailedLoginsREADME
 	} catch {
 	
 		$e = $_
-
-		Write-Output $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
 	}
 
 } # End Function Get-WebsiteFailedLoginsReadme
@@ -283,7 +183,7 @@ Function Copy-WebsiteFailedLoginsREADME
     #>
     [CmdletBinding()]
     param( 
-			[parameter(Mandatory=$false)]
+			[Parameter(Mandatory=$false)]
             [ValidateScript({Test-Path -LiteralPath $_ -PathType Container})]
 			[string]
             # Destination folder to copy README.md
@@ -301,8 +201,7 @@ Function Copy-WebsiteFailedLoginsREADME
 	} catch {
 	
 		$e = $_
-
-		Write-Output $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
 	}
 
 } # End Function Copy-WebsiteFailedLoginsReadme
@@ -333,8 +232,7 @@ Function Get-WebsiteFailedLoginsDefaultConfiguration
 	} catch {
 
 		$e = $_
-
-		Write-Output $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
 	}
 
 } # End Function Get-WebsiteFailedLoginsDefaultConfiguration
@@ -348,7 +246,7 @@ Function Copy-WebsiteFailedLoginsDefaultConfiguration
     #>
     [CmdletBinding()]
     param( 
-			[parameter(Mandatory=$false)]
+			[Parameter(Mandatory=$false)]
 			[ValidateScript({Test-Path -LiteralPath $_ -PathType Container})]
             [string]
             # Destination folder to copy WebsiteFailedLogins.ini
@@ -368,8 +266,7 @@ Function Copy-WebsiteFailedLoginsDefaultConfiguration
 	} catch {
 	
 		$e = $_
-
-		Write-Output $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
 	}
 
 } # End Function Copy-WebsiteFailedLoginsDefaultConfiguration
