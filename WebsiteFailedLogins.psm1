@@ -72,7 +72,7 @@ Function Invoke-WebsiteFailedLogins
     } else {
 
         # Per IP Failed Logins
-        $resultFailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration
+        $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration
 
         if ($resultFailedLoginsPerIP.Count -gt 0)
         {
@@ -87,7 +87,7 @@ Function Invoke-WebsiteFailedLogins
         }
 
         # Total Failed Logins
-        $resultTotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration
+        $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration
 
         if ($resultTotalFailedLogins.Count -gt 0)
         {
@@ -221,7 +221,7 @@ Function Get-WebsiteFailedLoginsDefaultConfiguration
 
         $defaultConfigPathFolder = Join-Path -Path $PSScriptRoot -ChildPath 'Resources'
 
-        $defaultConfigPath = Join-Path -Path $defaultConfigPathFolder -ChildPath 'WebsiteFailedLogins.ini'
+        $defaultConfigPath = Join-Path -Path $defaultConfigPathFolder -ChildPath 'WebsiteFailedLogins_default.ini'
 
 		$configFile = Get-Item -LiteralPath $defaultConfigPath -ErrorAction Stop
 
@@ -257,7 +257,7 @@ Function Copy-WebsiteFailedLoginsDefaultConfiguration
 
         $defaultConfigPathFolder = Join-Path -Path $PSScriptRoot -ChildPath 'Resources'
 
-        $defaultConfigPath = Join-Path -Path $defaultConfigPathFolder -ChildPath 'WebsiteFailedLogins.ini'
+        $defaultConfigPath = Join-Path -Path $defaultConfigPathFolder -ChildPath 'WebsiteFailedLogins_default.ini'
     
 		$configFile = Get-Item -LiteralPath $defaultConfigPath -ErrorAction Stop
 

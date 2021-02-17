@@ -30,9 +30,9 @@ FileList = 'LICENSE',
            'README.md',
            'WebsiteFailedLogins.psd1',
            'WebsiteFailedLogins.psm1',
+           'Resources\WebsiteFailedLogins_default.ini',
            'Resources\WebsiteFailedLogins.alert.psm1',
            'Resources\WebsiteFailedLogins.config.psm1',
-           'Resources\WebsiteFailedLogins.ini',
            'Resources\WebsiteFailedLogins.logins.psm1',
            'Resources\WebsiteFailedLogins.lp.psm1'
 

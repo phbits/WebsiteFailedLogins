@@ -68,7 +68,23 @@ Function Assert-ValidIniConfig
 
             }       # END validate [INI]
 
-            2 {     # BEGIN validate [Website] Sitename
+            2 {     # BEGIN validate [Website] FriendlyName
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Website.FriendlyName) -eq $false)
+                    {
+                        if ($IniConfig.Website.FriendlyName -notmatch "^[a-zA-Z0-9-_\. ]{1,50}$")
+                        {
+                            $returnValue.ErrorMessages += '[Error][Config][Website] FriendlyName not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][Website] FriendlyName not specified.'
+                    }
+
+            }       # END validate [Website] FriendlyName
+
+            3 {     # BEGIN validate [Website] Sitename
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.Sitename) -eq $false)
                     {
@@ -84,7 +100,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] Sitename
 
-            3 {     # BEGIN validate [Website] Authentication
+            4 {     # BEGIN validate [Website] Authentication
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.Authentication) -eq $false)
                     {
@@ -100,7 +116,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] Authentication
 
-            4 {     # BEGIN validate [Website] HttpResponse
+            5 {     # BEGIN validate [Website] HttpResponse
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.HttpResponse) -eq $false)
                     {
@@ -116,9 +132,9 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] HttpResponse
 
-            5 {     # BEGIN validate [Website] UrlPath
+            6 {     # BEGIN validate [Website] UrlPath
 
-                    if ($IniConfig.Website.Authentication -match "^(?i)(Forms)$")
+                    if ($IniConfig.Website.Authentication -imatch 'Forms')
                     {
                         if ([System.String]::IsNullOrEmpty($IniConfig.Website.UrlPath) -eq $false)
                         {
@@ -139,7 +155,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] UrlPath
 
-            6 {     # BEGIN validate [Website] LogPath
+            7 {     # BEGIN validate [Website] LogPath
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.LogPath) -eq $false)
                     {
@@ -175,7 +191,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] LogPath
 
-            7 {     # BEGIN validate [Website] FailedLoginsPerIP
+            8 {     # BEGIN validate [Website] FailedLoginsPerIP
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.FailedLoginsPerIP) -eq $false)
                     {
@@ -204,7 +220,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] FailedLoginsPerIP
 
-            8 {     # BEGIN validate [Website] TotalFailedLogins
+            9 {     # BEGIN validate [Website] TotalFailedLogins
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.TotalFailedLogins) -eq $false)
                     {
@@ -233,7 +249,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] TotalFailedLogins
 
-            9 {     # BEGIN validate [Website] StartTime
+            10 {    # BEGIN validate [Website] StartTime
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.StartTime) -eq $false)
                     {
@@ -245,7 +261,7 @@ Function Assert-ValidIniConfig
                             {
                                 [int] $IniConfig.Website.StartTime = $intSeconds
 
-                                $IniConfig.Website.StartTimeTS = (Get-Date).AddSeconds($($intSeconds * -1)).ToString('yyyy-MM-dd HH:mm:ss')
+                                $IniConfig.Website.StartTimeTS = (Get-Date).ToUniversalTime().AddSeconds($($intSeconds * -1)).ToString('yyyy-MM-dd HH:mm:ss')
 
                             } else {
 
@@ -264,7 +280,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Website] StartTime
 
-            10 {    # BEGIN validate [Logparser] Path
+            11 {    # BEGIN validate [Logparser] Path
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Logparser.Path) -eq $false)
                     {
@@ -291,8 +307,8 @@ Function Assert-ValidIniConfig
                             } catch {
                                 
                                 $e = $_
-
-                                $returnValue.ErrorMessages += $('[Error][Config][Logparser] {0}' -f $e.Exception.Message)
+                                $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.exe validation error.'
+                                $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
                             }
                         
                         } else {
@@ -307,7 +323,33 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Logparser] Path
 
-            11 {    # BEGIN validate [Logparser] run test query
+            12 {    # BEGIN validate [Logparser] dll
+
+                $lp = Get-Item -LiteralPath $IniConfig.Logparser.Path
+
+                $lpDllPath = Join-Path -Path $lp.Directory -ChildPath 'logparser.dll'
+
+                try {
+
+                    $lpDll = Get-Item -LiteralPath $lpDllPath
+
+                    if ($lpDll.VersionInfo.FileVersion -ne '2.2.10.0')
+                    {
+                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser DLL Version {0}' -f $lpDll.VersionInfo.FileVersion)
+
+                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser DLL Version 2.2.10'
+                    }
+
+                } catch {
+                    
+                    $e = $_
+                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.dll validation error.'
+                    $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
+                }
+
+            }       # END validate [Logparser] dll
+
+            13 {    # BEGIN validate [Logparser] run test query
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Logparser.Path) -eq $false)
                     {
@@ -355,7 +397,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Logparser] run test query
 
-            12 {    # BEGIN validate [Alert] Method
+            14 {    # BEGIN validate [Alert] Method
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -371,7 +413,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] Method
 
-            13 {    # BEGIN validate [Alert] DataType
+            15 {    # BEGIN validate [Alert] DataType
 
                 if ([System.String]::IsNullOrEmpty($IniConfig.Alert.DataType) -eq $false)
                 {
@@ -387,11 +429,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] DataType
 
-            14 {    # BEGIN validate [SMTP] To
+            16 {    # BEGIN validate [SMTP] To
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.To) -eq $false)
                             {
@@ -413,11 +455,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] To
 
-            15 {    # BEGIN validate [SMTP] From
+            17 {    # BEGIN validate [SMTP] From
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.From) -eq $false)
                             {
@@ -439,11 +481,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] From
 
-            16 {    # BEGIN validate [SMTP] Subject
+            18 {    # BEGIN validate [SMTP] Subject
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Subject))
                             {
@@ -471,11 +513,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Subject
 
-            17 {    # BEGIN validate [SMTP] Port
+            19 {    # BEGIN validate [SMTP] Port
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Port) -eq $false)
                             {
@@ -506,11 +548,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Port
 
-            18 {    # BEGIN validate [SMTP] Server
+            20 {    # BEGIN validate [SMTP] Server
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Server) -eq $false)
                             {
@@ -541,11 +583,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] Server
 
-            19 {    # BEGIN validate [SMTP] CredentialXml
+            21 {    # BEGIN validate [SMTP] CredentialXml
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)Smtp(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
                             {
@@ -572,11 +614,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] CredentialXml
 
-            20 {    # BEGIN validate [WinEvent] Logname
+            22 {    # BEGIN validate [WinEvent] Logname
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Logname) -eq $false)
                             {
@@ -598,11 +640,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Logname
 
-            21 {    # BEGIN validate [WinEvent] Source
+            23 {    # BEGIN validate [WinEvent] Source
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Source) -eq $false)
                             {
@@ -633,11 +675,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Source
 
-            22 {    # BEGIN validate [WinEvent] EntryType
+            24 {    # BEGIN validate [WinEvent] EntryType
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.EntryType) -eq $false)
                             {
@@ -657,11 +699,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] EntryType
 
-            23 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
+            25 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.FailedLoginsPerIPEventId) -eq $false)
                             {
@@ -699,11 +741,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] FailedLoginsPerIPEventId
 
-            24 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
+            26 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.TotalFailedLoginsEventId) -eq $false)
                             {
@@ -741,11 +783,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] TotalFailedLoginsEventId
 
-            25 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
+            27 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -match "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
                             if ($IniConfig.WinEvent.TotalFailedLoginsEventId -eq $IniConfig.WinEvent.FailedLoginsPerIPEventId)
                             {
@@ -756,7 +798,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
-            26 {    # BEGIN validate IIS Log Access
+            28 {    # BEGIN validate IIS Log Access
 
                     $lpQuery = "SELECT TOP 1 * FROM '$($IniConfig.Website.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'"
 
@@ -803,11 +845,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate IIS Log Access
 
-            27 {    # BEGIN validate [WinEvent] Write Start
+            29 {    # BEGIN validate [WinEvent] Write Start
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -imatch "^(?i)(.*)WinEvent(.*)$")
+                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {                           
 
                             try {
@@ -909,7 +951,7 @@ Function Get-IniConfig
 
     $config['Script'].Add('ConfigPath',(Get-Item $Path).FullName)
 
-    $config['Script'].Add('StartTS', (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))
+    $config['Script'].Add('StartTS', (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
 
     return $config
 

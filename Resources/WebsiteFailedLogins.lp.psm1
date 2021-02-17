@@ -15,13 +15,9 @@ Function Get-LogparserQuery
         ,
         [Parameter(Mandatory=$false)]
         [switch]
-        # By default, returns query for Client IP (c-ip) failed logins. This switch is used to get the total failed login count query.
+        # By default, returns query for Client IP (c-ip) failed logins.
+        # This switch is used to get the total failed login count query.
         $TotalFailedLogins
-        ,
-        [Parameter(Mandatory=$false)]
-        [switch]
-        # Includes cs-uri-stem=UrlPath and cs-method=POST
-        $FormsAuth
     )
 
     # Begin query build
@@ -38,10 +34,10 @@ Function Get-LogparserQuery
 
     $returnQuery += "FROM '{0}' " -f $IniConfig.Website.LogPath
     $returnQuery += "WHERE s-sitename LIKE '{0}' " -f $IniConfig.Website.Sitename
-    $returnQuery += "AND TO_LOCALTIME(TO_TIMESTAMP(date,time)) >= TO_TIMESTAMP('{0}','yyyy-MM-dd HH:mm:ss') " -f $IniConfig.Website.StartTimeTS
+    $returnQuery += "AND TO_TIMESTAMP(date,time) >= TO_TIMESTAMP('{0}','yyyy-MM-dd HH:mm:ss') " -f $IniConfig.Website.StartTimeTS
 	$returnQuery += 'AND sc-status = {0} ' -f $IniConfig.Website.HttpResponse
 
-    if ($FormsAuth)
+    if ($IniConfig.Website.Authentication -eq 'Forms')
     {
         $returnQuery += "AND cs-uri-stem LIKE '{0}' AND cs-Method LIKE 'POST' " -f $IniConfig.Website.UrlPath
     }

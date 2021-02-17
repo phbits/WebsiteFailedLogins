@@ -10,7 +10,6 @@ This PowerShell module was created to identify the following scenarios affecting
 It leverages Microsoft Logparser and a configuration file to parse the target website's IIS logs. When a threshold is met or exceeded an alert is generated via standard out, email, and/or written to a Windows Event Log. No changes are needed on the webserver. This module can even run on a separate system where there's access to the IIS logs.
 
 
-
 # Prerequisites #
 
 
@@ -65,6 +64,7 @@ There are two functions in this module used for working with the default configu
 - `Get-WebsiteFailedLoginsDefaultConfiguration` - returns the content of the default configuration file to standard out.
 - `Copy-WebsiteFailedLoginsDefaultConfiguration` - copies the default configuration file to the destination folder.
 
+The following sections will better describe each of the settings.
 
 ## [Website] Sitename ##
 
@@ -119,9 +119,11 @@ The total number of failed logins having occurred since the `StartTime` that wil
 
 Number of seconds from when the script is launched to establish the `StartTime`. Any requests from that point forward will be included.
 
+Since IIS logs via UTC, that timezone is used for this module.
+
 > EXAMPLE: if the window is 1800 seconds (30 minutes), `StartTime` will be calculated using: 
 > 
->	`(Get-Date).AddSeconds(-1800)`
+>	`(Get-Date).ToUniversalTime().AddSeconds(-1800)`
 
 
 ## [Logparser] Path ##
@@ -142,6 +144,15 @@ Standard out will always be used even if no value is specified. Choosing both Sm
 - WinEvent - Write an event based on the `[WinEvent]` settings.
 
 
+## [Alert] DataType ##
+
+Alert data can be provided in different formats making it easier to work with.
+
+- text - Similar to printing out each line of an array, this option just provides text.
+- xml - Alert data can be deserialized into an object using: [System.Management.Automation.PSSerializer]::Deserialize()
+- json - The ConvertFrom-Json cmdlet can be used to easily work with the data.
+
+
 ## [Smtp] To ##
 
 Recipient email address for the alert.
@@ -159,7 +170,7 @@ Email subject for the alert.
 
 ## [Smtp] Server ##
 
-DNS name of SMTP server.
+DNS name or IP address of SMTP server.
 
 > NOTE: this script is hard-coded to use `TLS1.2` when communicating with this server.
 
@@ -180,8 +191,7 @@ To create this file run the following command using the account that will be lau
 Get-Credential | Export-Clixml -Path <CredentialXmlPath>
 ```
 
-
-Ensure NTFS permissions on the PSCredential xml file are tuned to only allow access to SYSTEM, any backup accounts, and the user running this module.
+Ensure NTFS permissions on the PSCredential xml file are tuned to only allow access to SYSTEM, any backup accounts, and the user running this module. The Export-Clixml cmdlet encrypts credential objects by using the Windows Data Protection API. The encryption ensures that only your user account on only that computer can decrypt the contents of the credential object. The exported CLIXML file can't be used on a different computer or by a different user. For more information: [Export-Clixml: Example 3: Encrypt an exported credential object on Windows](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/export-clixml?view=powershell-7.1#example-3--encrypt-an-exported-credential-object-on-windows)
 
 
 ## [WinEvent] LogName ##
@@ -227,13 +237,49 @@ The shortest reoccurrence one should use with this module is 5 minutes. If a sho
 
 The greatest performance impact on this module is providing Logparser gigabytes upon gigabytes of logs since they will all be checked. Practice good log maintenance by placing older logs in an archive. Doing so will greatly improve performance.
 
-Once the configuration file has been finalized and no longer produces errors, consider running `Invoke-WebsiteFailedLogins` with the `-MinimumValidation` switch. Doing so performs the minimum number of validation checks against the configuration file.
+Once the configuration file has been finalized and no longer produces errors, consider running `Invoke-WebsiteFailedLogins` with the `-RunningConfig` switch. Doing so will exclude validation checks against the configuration file and only perform the necessary operations of massaging various settings.
 
+
+
+# Returned Data #
+
+Invoke-WebsiteFailedLogins returns an object containing all of the results and will make integration even easier. Whereas before the focus was on Event ID triggers, now custom scripts can be used as wrappers to take any desired action.
+
+```
+[Returned-Object]
+	FailedLoginsPerIP <array> - each item of the array is a FailedLoginsPerIP hashtable.
+	TotalFailedLogins <hashtable> - TotalFailedLogins hashtable.
+	HasError <boolean> - signifies if an error occurred.
+	HasResults <boolean> - sigifies if there are any results.
+	Configuration <hashtable> - original configuration after being massaged by the module.
+	ErrorMessages <array> - string array of error messages.
+
+[FailedLoginsPerIP]
+	ClientIP
+    FailedLogins
+    Sitename
+    IISLogPath
+    Authentication
+    HttpResponse
+    UrlPath
+    Start
+    End~
+
+[TotalFailedLogins]
+	TotalFailedLogins
+    Sitename
+    IISLogPath
+    Authentication
+    HttpResponse
+    UrlPath
+    Start
+    End~
+```
 
 
 # Taking Action #
 
-This module will only generate an alert. This is because taking action has many nuances as described below.
+This module will only generate an alert and return any results. This is because taking action has many nuances as described below.
 
 1. Blocking and/or rate limiting an IP address is a judgement call based on the application being protected and technology used. Should it be addressed at the website? Server/VIP? Perimeter? Other?
 2. Allowing formerly blocked and/or rate limited IP addresses is also a judgement call unique to the application being protected and technology used.
@@ -251,7 +297,7 @@ The following are potential issues one should be aware of when implementing this
 
 1. Identifying failed logins when Basic or Windows authentication is used requires checking the HTTP response code only. A user is not redirected to a logon page such is the case when using Forms authentication. Thus, a client can initiate the logon process by requesting any resource within the website/application. If this same website/application has a resource secured to a smaller subset of users, an already authenticated user could trigger an alert by attempting to access the more secure resource they don't have permission to view. 
 
-	> EXAMPLE: suppose a website requires an authenticated user. This same website has a folder '/Management' which should only be accessible by those in the Management group. A non-management authenticated user will get an HTTP 401 when requesting a resource in that directory.
+	> EXAMPLE: suppose a website requires an authenticated user. This same website has a folder '/Management' which should only be accessible by those in the Management group. A non-management authenticated user will get an HTTP 401 when requesting a resource in that directory. Repeated attempts to '/Management' could trigger an alert.
 
 2. Another scenario is an HTTP client that doesn't recognize the authentication header. Thereby making request after request resulting in an HTTP 401 and the `cs-username` being logged as `NULL`. 
 

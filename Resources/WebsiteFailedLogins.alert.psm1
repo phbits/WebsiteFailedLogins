@@ -149,7 +149,7 @@ Function Send-SmtpAlert
 
     if ($AlertData.ContainsKey('ClientIP'))
     {
-        $emailProperties.Subject = '[FailedLoginsPerIP] {0}' -f $IniConfig.Smtp.Subject
+        $emailProperties.Subject = '[FailedLoginsPerIP][{0}] {1}' -f $IniConfig.ClientIP,$IniConfig.Smtp.Subject
     }
 
     if ($TerminatingError)
