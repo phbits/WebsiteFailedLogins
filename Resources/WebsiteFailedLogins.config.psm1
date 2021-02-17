@@ -26,9 +26,9 @@ Function Assert-ValidIniConfig
     $i = 0
 
     $returnValue = @{
-                        $ErrorMessages = @()
-                        $HasError      = $false
-                        $Configuration = @{}
+                        'ErrorMessages' = @()
+                        'HasError'      = $false
+                        'Configuration' = @{}
                     }
 
     [int[]] $MinimumChecks = 1,6,7,8,9,10,12,16,22,23,24
