@@ -20,8 +20,7 @@ This PowerShell module was created to identify the following scenarios affecting
 It leverages Microsoft Logparser and a configuration file to parse the target website's IIS logs. When a threshold is met or exceeded an alert is generated via standard out, email, and/or written to a Windows Event Log. No changes are needed on the webserver. This module can even run on a separate system where there's access to the IIS logs.
 '@
 
-NestedModules = @(  'Resources\WebsiteFailedLogins_default.ini',
-                    'Resources\WebsiteFailedLogins.alert.psm1',
+NestedModules = @(  'Resources\WebsiteFailedLogins.alert.psm1',
                     'Resources\WebsiteFailedLogins.config.psm1',
                     'Resources\WebsiteFailedLogins.logins.psm1',
                     'Resources\WebsiteFailedLogins.lp.psm1'       )
