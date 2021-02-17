@@ -1,3 +1,6 @@
+Import-Module $(Join-Path -Path $PSScriptRoot -ChildPath 'WebsiteFailedLogins.alert.psm1')
+Import-Module $(Join-Path -Path $PSScriptRoot -ChildPath 'WebsiteFailedLogins.lp.psm1')
+
 Function Get-FailedLoginsPerIP
 {
     <#
@@ -51,7 +54,6 @@ Function Get-TotalFailedLogins
 {
     <#
         .SYNOPSIS
-
             Gets the total failed login count if it meets or exceeds TotalFailedLogins threshold during the specified window.
     #>
     [CmdletBinding()]
