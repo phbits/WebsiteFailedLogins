@@ -923,7 +923,7 @@ Function Get-IniConfig
 
     switch -regex -file $Path
     {
-        "^.*\[(.+)\].*$" # Section
+        "^\[(.+)\].*$" # Section
         {
             $section = $matches[1]
 
@@ -949,9 +949,12 @@ Function Get-IniConfig
         $config.Add('Script',@{})
     }
 
-    $config['Script'].Add('ConfigPath',(Get-Item $Path).FullName)
+    if ($config.ContainsKey('Script'))
+    {
+        $config['Script'].Add('ConfigPath',(Get-Item $Path).FullName)
 
-    $config['Script'].Add('StartTS', (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        $config['Script'].Add('StartTS', (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
+    }
 
     return $config
 
