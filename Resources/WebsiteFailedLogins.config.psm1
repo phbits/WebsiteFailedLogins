@@ -401,7 +401,7 @@ Function Assert-ValidIniConfig
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
-                        if ($IniConfig.Alert.Method -notmatch "^(?i)Smtp|WinEvent|stdout$")
+                        if ($IniConfig.Alert.Method -notmatch "^(?i)Smtp|WinEvent|stdout|None|\s$")
                         {
                             $returnValue.ErrorMessages += '[Error][Alert] Method not valid.'
                         }
