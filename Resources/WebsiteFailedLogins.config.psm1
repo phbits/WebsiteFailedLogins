@@ -37,6 +37,11 @@ Function Assert-ValidIniConfig
 
         $i++
         
+        if ($returnValue.ErrorMessages.Count -gt 0)
+        {
+            $i = 1000
+        }
+
         if ($RunningConfig)
         {
             if ($MinimumChecks.Contains($i) -eq $false)
@@ -47,11 +52,6 @@ Function Assert-ValidIniConfig
 
                 } until($MinimumChecks.Contains($i) -eq $true -or $i -gt $MinimumChecks[-1])
             }
-        }
-
-        if ($returnValue.ErrorMessages.Count -gt 0)
-        {
-            $i = 1000
         }
 
         Write-Verbose -Message "[Assert-ValidIniConfig] Check #$($i)"

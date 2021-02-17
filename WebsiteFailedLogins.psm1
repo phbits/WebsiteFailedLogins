@@ -54,7 +54,7 @@ Function Invoke-WebsiteFailedLogins
 
     $iniConfig = Get-IniConfig -Path $Configuration
 
-    $configTestResult = Assert-ValidIniConfig -IniConfig $iniConfig -RunningConfig:$($RunningConfig)
+    $configTestResult = Assert-ValidIniConfig -IniConfig $iniConfig -RunningConfig:$($RunningConfig) -Verbose:$($Verbose)
     
     $returnValue.Configuration = $configTestResult.Configuration
 
