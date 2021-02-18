@@ -46,7 +46,7 @@ Function Get-FailedLoginsPerIP
                                 'UrlPath'        = $IniConfig.Website.UrlPath
                                 'Start'          = "$($IniConfig.Website.StartTimeTS) UTC"
                                 'End~'           = "$($queryTimestamp) UTC"
-                             }
+                            }
         }
     }
 
@@ -107,7 +107,5 @@ Function Get-TotalFailedLogins
     return $returnValue
 
 } # End Function Get-TotalFailedLogins
-
-
 
 Export-ModuleMember -Function 'Get-FailedLoginsPerIP','Get-TotalFailedLogins'

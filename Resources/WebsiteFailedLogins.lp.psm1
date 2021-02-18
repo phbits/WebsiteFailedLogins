@@ -84,15 +84,6 @@ function Invoke-Logparser
         $Switches
     )
 
-    $includeHeaders = '-headers:OFF'
-
-    if ($Query.Contains('ClientIP') -eq $true)
-    {
-        $includeHeaders = '-headers:ON'
-    }
-
-    $logparserArguments = @('-recurse:-1',$includeHeaders,'-i:IISW3C','-o:CSV','-q:ON','-stats:OFF',$Query)
-    
     try {
         # Use System.Diagnostics.Process to process the auditpol command
         $process = New-Object System.Diagnostics.Process
