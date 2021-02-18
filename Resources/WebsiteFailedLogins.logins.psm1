@@ -69,7 +69,7 @@ Function Get-TotalFailedLogins
 
     [Int32] $totalHits = 0
 
-    $logparserQuery = Get-LogparserQuery -TotalFailedLogins
+    $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig -TotalFailedLogins
 
     [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.Path -Query $logparserQuery
 
