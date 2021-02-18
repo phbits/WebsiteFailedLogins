@@ -372,6 +372,7 @@ Function Assert-ValidIniConfig
                                 if ($lpFileVersion.Trim() -eq 'Task aborted.')
                                 {
                                     $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
+                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Task aborted.'
 
                                 } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
 
@@ -382,6 +383,7 @@ Function Assert-ValidIniConfig
                             } else {
 
                                 $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
+                                $returnValue.ErrorMessages += '[Error][Config][Logparser] No value returned.'
                             }
 
                         } catch {
