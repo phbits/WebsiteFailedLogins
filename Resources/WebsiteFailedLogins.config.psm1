@@ -31,7 +31,7 @@ Function Assert-ValidIniConfig
                         'Configuration' = @{}
                     }
 
-    [int[]] $MinimumChecks = 1,6,7,8,9,10,12,16,22,23,24
+    [int[]] $MinimumChecks = 1,7,8,9,10,11,13,17,23,24,25
 
     do {
 
