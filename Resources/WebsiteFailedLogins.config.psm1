@@ -31,7 +31,7 @@ Function Assert-ValidIniConfig
                         'Configuration' = @{}
                     }
 
-    [int[]] $minimumChecks = 1,7,8,9,10,11,13,17,23,24,25
+    [int[]] $minimumChecks = 1,7,8,9,10,11,19,25,26,27
 
     do {
 
@@ -50,7 +50,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 40)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -ge 30)
             }
         }
 
@@ -167,16 +167,16 @@ Function Assert-ValidIniConfig
                             {
                                 if ($logPathRef.FullName.EndsWith('\'))
                                 {
-                                    $IniConfig.Website.LogPath = '{0}*' -f $logPathRef.FullName
+                                    $IniConfig.Logparser.Add('LogPath',$('{0}*' -f $logPathRef.FullName))
                                 
                                 } else {
 
-                                    $IniConfig.Website.LogPath = '{0}\*' -f $logPathRef.FullName
+                                    $IniConfig.Logparser.Add('LogPath',$('{0}\*' -f $logPathRef.FullName))
                                 }
 
                             } else {
 
-                                $IniConfig.Website.LogPath = $logPathRef.FullName
+                                $IniConfig.Logparser.Add('LogPath',$($logPathRef.FullName))
                             }
 
                         } catch {
@@ -286,16 +286,18 @@ Function Assert-ValidIniConfig
                     {
                         if (Test-Path -LiteralPath $IniConfig.Logparser.Path)
                         {
-                            $lp = Get-Item -LiteralPath $IniConfig.Logparser.Path
+                            $IniConfig.Logparser.Add('ExePath', $IniConfig.Logparser.Path)
+                            
+                            $lp = Get-Item -LiteralPath $IniConfig.Logparser.ExePath
 
                             if ($lp.PSIsContainer)
                             {
-                                $IniConfig.Logparser.Path = Join-Path -Path $IniConfig.Logparser.Path -ChildPath 'LogParser.exe'
+                                $IniConfig.Logparser.ExePath = Join-Path -Path $IniConfig.Logparser.ExePath -ChildPath 'LogParser.exe'
                             }
 
                             try {
 
-                                $lpExe = Get-Item -LiteralPath $IniConfig.Logparser.Path -ErrorAction Stop
+                                $lpExe = Get-Item -LiteralPath $IniConfig.Logparser.ExePath -ErrorAction Stop
 
                                 if ($lpExe.VersionInfo.FileVersion -ne '2.2.10.0')
                                 {
@@ -325,7 +327,7 @@ Function Assert-ValidIniConfig
 
             12 {    # BEGIN validate [Logparser] dll
 
-                $lp = Get-Item -LiteralPath $IniConfig.Logparser.Path
+                $lp = Get-Item -LiteralPath $IniConfig.Logparser.ExePath
 
                 $lpDllPath = Join-Path -Path $lp.Directory -ChildPath 'logparser.dll'
 
@@ -336,7 +338,6 @@ Function Assert-ValidIniConfig
                     if ($lpDll.VersionInfo.FileVersion -ne '2.2.10.0')
                     {
                         $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser DLL Version {0}' -f $lpDll.VersionInfo.FileVersion)
-
                         $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser DLL Version 2.2.10'
                     }
 
@@ -351,14 +352,18 @@ Function Assert-ValidIniConfig
 
             13 {    # BEGIN validate [Logparser] run test query
 
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Logparser.Path) -eq $false)
+                    if ($IniConfig.Logparser.ContainsKey('ExePath'))
                     {
                         # test launch of logparser
                         try {
                             
-                            $lpQuery = "`"SELECT FileVersion FROM `'$($IniConfig.Logparser.Path)`'`""
+                            $lpQuery = "`"SELECT FileVersion FROM `'$($IniConfig.Logparser.ExePath)`'`""
 
-                            [string] $lpFileVersion = & $IniConfig.Logparser.Path -e:-1 -iw:ON -headers:OFF -q:ON -i:FS -o:CSV $lpQuery
+                            $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
+
+                            [string] $lpFileVersion = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                                       -Query $lpQuery `
+                                                                       -Switches $logparserArgs
 
                             if ($null -ne $lpFileVersion)
                             {
@@ -371,7 +376,6 @@ Function Assert-ValidIniConfig
                                     } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
 
                                         $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpFileVersion)
-
                                         $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
                                     }
 
@@ -800,24 +804,30 @@ Function Assert-ValidIniConfig
 
             28 {    # BEGIN validate IIS Log Access
 
-                    $lpQuery = "SELECT TOP 1 * FROM '$($IniConfig.Website.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'"
+                    $lpQuery = "SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'"
 
                     $lpError = @(
                                     '[Error][Config][Script] Failed getting valid IIS log entry',
                                     $('[Error][Config][Script]   sitename: {0}' -f $IniConfig.Website.Sitename.ToUpper()),
-                                    $('[Error][Config][Script]   Logparser.exe path: {0}' -f $IniConfig.Website.LogPath),
+                                    $('[Error][Config][Script]   Logparser.exe path: {0}' -f $IniConfig.Logparser.LogPath),
                                     $('[Error][Config][Script]   query: {0}' -f $lpQuery)
                                 )
 
                     try {
                         
-                        $lpOutput = & $IniConfig.Logparser.Path -iw:ON -q:ON -i:IISW3C -o:CSV $lpQuery | ConvertFrom-Csv
+                        $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
-                        if ($null -ne $lpOutput)
+                        $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                     -Query $lpQuery `
+                                                     -Switches $logparserArgs
+
+                        if ([System.String]::IsNullOrEmpty($lpOutput) -eq $false)
                         {
-                            if ([System.String]::IsNullOrEmpty($lpOutput.'s-sitename') -eq $false)
+                            $lpOutputCsv = $lpOutput | ConvertFrom-Csv
+
+                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.'s-sitename') -eq $false)
                             {                                        
-                                if ($lpOutput.'s-sitename' -ne $IniConfig.Website.Sitename)
+                                if ($lpOutputCsv.'s-sitename' -ne $IniConfig.Website.Sitename)
                                 {
                                     $returnValue.ErrorMessages += $lpError
                                     $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'    

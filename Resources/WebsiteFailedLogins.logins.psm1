@@ -21,7 +21,11 @@ Function Get-FailedLoginsPerIP
 
     $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig
 
-    $logparserResults = Invoke-Logparser -Path $IniConfig.Logparser.Path -Query $logparserQuery
+    $logparserArgs = @('-recurse:-1','-headers:ON','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
+
+    $logparserResults = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                         -Query $logparserQuery `
+                                         -Switches $logparserArgs
 
     $queryTimestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')
 
@@ -71,7 +75,11 @@ Function Get-TotalFailedLogins
 
     $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig -TotalFailedLogins
 
-    [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.Path -Query $logparserQuery
+    $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
+
+    [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                 -Query $logparserQuery `
+                                                 -Switches $logparserArgs
 
     [string] $queryTimestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 
@@ -100,67 +108,6 @@ Function Get-TotalFailedLogins
 
 } # End Function Get-TotalFailedLogins
 
-function Invoke-Logparser
-{
-    <#
-        .SYNOPSIS
-            Private function that wraps Logparser.exe
-        .LINK
-            https://github.com/dsccommunity/AuditPolicyDsc/blob/dev/DSCResources/AuditPolicyResourceHelper/AuditPolicyResourceHelper.psm1
-    #>
 
-    [OutputType([System.String])]
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$true)]
-        [System.String]
-        # Logparser Path
-        $Path
-        ,
-        [Parameter(Mandatory=$true)]
-        [System.String]
-        # Logparser Query
-        $Query
-    )
-
-    $includeHeaders = '-headers:OFF'
-
-    if ($Query.Contains('ClientIP') -eq $true)
-    {
-        $includeHeaders = '-headers:ON'
-    }
-
-    $logparserArguments = @('-recurse:-1',$includeHeaders,'-i:IISW3C','-o:CSV','-q:ON','-stats:OFF',$Query)
-    
-    try {
-        # Use System.Diagnostics.Process to process the auditpol command
-        $process = New-Object System.Diagnostics.Process
-        $process.StartInfo.Arguments = $logparserArguments
-        $process.StartInfo.CreateNoWindow = $true
-        $process.StartInfo.FileName = $Path
-        $process.StartInfo.RedirectStandardOutput = $true
-        $process.StartInfo.UseShellExecute = $false
-        $process.StartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
-        
-        if ($process.Start() -eq $true)
-        {
-            [string] $logparserReturn = $process.StandardOutput.ReadToEnd()
-        }
-
-        $process.Dispose()
-    }
-    catch {
-        $e = $_
-        # Catch the error thrown if the lastexitcode is not 0
-        [string] $errorString = "`n EXCEPTION:    $($e.Exception.Message)" + `
-                                "`n LASTEXITCODE: $LASTEXITCODE" + `
-                                "`n COMMAND:      $Path $logparserArguments"
-
-        Write-Error -Message $errorString
-    }
-
-    return $logparserReturn
-
-} # end function Invoke-Logparser
 
 Export-ModuleMember -Function 'Get-FailedLoginsPerIP','Get-TotalFailedLogins'

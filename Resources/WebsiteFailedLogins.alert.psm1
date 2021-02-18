@@ -2,7 +2,7 @@ Function Submit-Alert
 {
     <#
         .SYNOPSIS
-
+        
             Submits alert to Windows Event Log or via SMTP.
     #>
     [CmdletBinding()]
