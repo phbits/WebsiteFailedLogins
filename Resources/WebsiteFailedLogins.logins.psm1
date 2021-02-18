@@ -32,7 +32,7 @@ Function Get-FailedLoginsPerIP
         foreach ($item in $resultsObj)
         {
             $returnValue += @{
-                                'FriendlyName'   = $IniConfig.FriendlyName
+                                'FriendlyName'   = $IniConfig.Website.FriendlyName
                                 'ClientIP'       = $item.ClientIP
                                 'FailedLogins'   = $item.Hits
                                 'Sitename'       = $IniConfig.Website.Sitename
@@ -82,7 +82,7 @@ Function Get-TotalFailedLogins
             if ($totalHits -ge $IniConfig.Website.TotalFailedLogins)
             {
                 $returnValue = @{
-                                    'FriendlyName'      = $IniConfig.FriendlyName
+                                    'FriendlyName'      = $IniConfig.Website.FriendlyName
                                     'TotalFailedLogins' = $totalHits
                                     'Sitename'          = $IniConfig.Website.Sitename
                                     'IISLogPath'        = $IniConfig.Website.LogPath
