@@ -883,6 +883,8 @@ Function Assert-ValidIniConfig
                     $returnValue.HasError = $true
 
                     $returnValue.ErrorMessages += '[Error][Config][Script] Terminating script.'
+
+                    Write-Error -Message $($returnValue.ErrorMessages -join [System.Environment]::NewLine)
                 }
 
                 $i = 0
