@@ -359,7 +359,7 @@ Function Assert-ValidIniConfig
                         # test launch of logparser
                         try {
                             
-                            $lpQuery = "`"SELECT FileVersion FROM `'$($IniConfig.Logparser.ExePath)`'`""
+                            $lpQuery = "`"SELECT FileVersion FROM `'{0}`'`"" -f $IniConfig.Logparser.ExePath
 
                             $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
 
@@ -367,25 +367,18 @@ Function Assert-ValidIniConfig
                                                                        -Query $lpQuery `
                                                                        -Switches $logparserArgs
 
-                            if ($null -ne $lpFileVersion)
-                            {
-                                if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
-                                {                                        
-                                    if ($lpFileVersion.Trim() -eq 'Task aborted.')
-                                    {
-                                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-
-                                    } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
-
-                                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpFileVersion)
-                                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
-                                    }
-
-                                } else {
-
+                            if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
+                            {                                        
+                                if ($lpFileVersion.Trim() -eq 'Task aborted.')
+                                {
                                     $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
+
+                                } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
+
+                                    $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpFileVersion)
+                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
                                 }
-                            
+
                             } else {
 
                                 $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
@@ -394,9 +387,7 @@ Function Assert-ValidIniConfig
                         } catch {
 
                             $e = $_
-
                             $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-
                             $returnValue.ErrorMessages += $('[Error][Config][Logparser] {0}' -f $e.Exception.Message)
                         }
                     }
