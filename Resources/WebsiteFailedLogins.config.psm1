@@ -1,3 +1,5 @@
+Import-Module $(Join-Path -Path $PSScriptRoot -ChildPath 'WebsiteFailedLogins.lp.psm1')
+
 Function Assert-ValidIniConfig
 {
     <#
