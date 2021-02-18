@@ -31,7 +31,7 @@ Function Assert-ValidIniConfig
                         'Configuration' = @{}
                     }
 
-    [int[]] $MinimumChecks = 1,7,8,9,10,11,13,17,23,24,25
+    [int[]] $minimumChecks = 1,7,8,9,10,11,13,17,23,24,25
 
     do {
 
@@ -44,13 +44,13 @@ Function Assert-ValidIniConfig
 
         if ($RunningConfig)
         {
-            if ($MinimumChecks.Contains($i) -eq $false)
+            if ($minimumChecks.Contains($i) -eq $false)
             {
                 do {
 
                     $i++
 
-                } until($MinimumChecks.Contains($i) -eq $true -or $i -gt $MinimumChecks[-1])
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 40)
             }
         }
 
