@@ -46,11 +46,11 @@ Function Get-FailedLoginsPerIP
 
         if($resultsObj -is [Array])
         {
-            foreach ($item in $resultsObj)
+            for ($i=0; $i -lt $resultsObj.Count; $i++)
             {
                 $itemResult = $resultBase
-                $itemResult.ClientIP = $item.ClientIP
-                $itemResult.FailedLogins = $item.Hits
+                $itemResult.ClientIP = $resultsObj[$i].ClientIP
+                $itemResult.FailedLogins = $resultsObj[$i].Hits
 
                 $returnValue += $itemResult
             }
