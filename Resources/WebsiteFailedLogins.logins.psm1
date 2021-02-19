@@ -29,24 +29,38 @@ Function Get-FailedLoginsPerIP
 
     $queryTimestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')
 
-    if ($null -ne $logparserResults)
+    if ([System.String]::IsNullOrEmpty($logparserResults) -eq $false)
     {
         $resultsObj = $logparserResults | ConvertFrom-Csv
 
-        foreach ($item in $resultsObj)
+        $resultBase = @{
+                            'FriendlyName'   = $IniConfig.Website.FriendlyName
+                            'ClientIP'       = ''
+                            'FailedLogins'   = ''
+                            'Sitename'       = $IniConfig.Website.Sitename
+                            'IISLogPath'     = $IniConfig.Website.LogPath
+                            'Authentication' = $IniConfig.Website.Authentication
+                            'HttpResponse'   = $IniConfig.Website.HttpResponse
+                            'UrlPath'        = $IniConfig.Website.UrlPath
+                            'Start'          = "$($IniConfig.Website.StartTimeTS) UTC"
+                            'End~'           = "$($queryTimestamp) UTC"
+                        }
+
+        if($resultsObj -is [Array])
         {
-            $returnValue += @{
-                                'FriendlyName'   = $IniConfig.Website.FriendlyName
-                                'ClientIP'       = $item.ClientIP
-                                'FailedLogins'   = $item.Hits
-                                'Sitename'       = $IniConfig.Website.Sitename
-                                'IISLogPath'     = $IniConfig.Website.LogPath
-                                'Authentication' = $IniConfig.Website.Authentication
-                                'HttpResponse'   = $IniConfig.Website.HttpResponse
-                                'UrlPath'        = $IniConfig.Website.UrlPath
-                                'Start'          = "$($IniConfig.Website.StartTimeTS) UTC"
-                                'End~'           = "$($queryTimestamp) UTC"
-                            }
+            foreach ($item in $resultsObj)
+            {
+                $itemResult = $resultBase
+                $itemResult.ClientIP = $item.ClientIP
+                $itemResult.FailedLogins = $item.Hits
+
+                $returnValue += $itemResult
+            }
+        } else {
+
+            $resultBase.ClientIP = $resultsObj.ClientIP
+            $resultBase.FailedLogins = $resultsObj.Hits
+            $returnValue += $resultBase
         }
     }
 
