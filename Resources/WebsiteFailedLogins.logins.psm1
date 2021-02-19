@@ -40,7 +40,7 @@ Function Get-FailedLoginsPerIP
                             'Authentication' = $IniConfig.Website.Authentication
                             'HttpResponse'   = $IniConfig.Website.HttpResponse
                             'UrlPath'        = $IniConfig.Website.UrlPath
-                            'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z'))"
+                            'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
                             'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                         }
 
@@ -54,6 +54,7 @@ Function Get-FailedLoginsPerIP
 
                 $returnValue += $itemResult
             }
+
         } else {
 
             $resultBase.ClientIP = $resultsObj.ClientIP
