@@ -647,22 +647,14 @@ Function Assert-ValidIniConfig
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Source) -eq $false)
                             {
-                                try {
 
-                                    $result = [System.Diagnostics.EventLog]::SourceExists($IniConfig.WinEvent.Source)
+                                $result = [System.Diagnostics.EventLog]::SourceExists($IniConfig.WinEvent.Source)
 
-                                    if ($result -eq $false){
+                                if ($result -eq $false){
 
-                                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source does not exist.'
-                                    }
-                                
-                                } catch {
-
-                                    $e = $_
-
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source not valid.'
-
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Exception: {0}' -f $e.Exception.Message
+                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source does not exist.'
+                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Run the following command in an elevated prompt.'
+                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent]    New-EventLog -LogName Application -Source WebsiteFailedLogins'
                                 }
 
                             } else {
