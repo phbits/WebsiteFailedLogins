@@ -27,8 +27,6 @@ Function Get-FailedLoginsPerIP
                                          -Query $logparserQuery `
                                          -Switches $logparserArgs
 
-    $queryTimestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')
-
     if ([System.String]::IsNullOrEmpty($logparserResults) -eq $false)
     {
         $resultsObj = $logparserResults | ConvertFrom-Csv
@@ -42,8 +40,8 @@ Function Get-FailedLoginsPerIP
                             'Authentication' = $IniConfig.Website.Authentication
                             'HttpResponse'   = $IniConfig.Website.HttpResponse
                             'UrlPath'        = $IniConfig.Website.UrlPath
-                            'Start'          = "$($IniConfig.Website.StartTimeTS) UTC"
-                            'End~'           = "$($queryTimestamp) UTC"
+                            'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z'))"
+                            'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                         }
 
         if($resultsObj -is [Array])
@@ -95,8 +93,6 @@ Function Get-TotalFailedLogins
                                                  -Query $logparserQuery `
                                                  -Switches $logparserArgs
 
-    [string] $queryTimestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
     {
         if ([System.Int32]::TryParse($logparserResult, [ref]$totalHits))
@@ -112,7 +108,7 @@ Function Get-TotalFailedLogins
                                     'HttpResponse'      = $IniConfig.Website.HttpResponse
                                     'UrlPath'           = $IniConfig.Website.UrlPath
                                     'Start'             = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
-                                    'End~'              = "$queryTimestamp"
+                                    'End~'              = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                                 }
             }
         }
