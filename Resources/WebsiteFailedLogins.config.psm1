@@ -799,53 +799,43 @@ Function Assert-ValidIniConfig
 
             28 {    # BEGIN validate IIS Log Access
 
-                    $lpQuery = "SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'"
+                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'`""
 
                     $lpError = @(
                                     '[Error][Config][Script] Failed getting valid IIS log entry',
-                                    $('[Error][Config][Script]   sitename: {0}' -f $IniConfig.Website.Sitename.ToUpper()),
-                                    $('[Error][Config][Script]   Logparser.exe path: {0}' -f $IniConfig.Logparser.LogPath),
-                                    $('[Error][Config][Script]   query: {0}' -f $lpQuery)
+                                    $('[Error][Config][Script]   Sitename: {0}' -f $IniConfig.Website.Sitename.ToUpper()),
+                                    $('[Error][Config][Script]   Logparser.exe path: {0}' -f $IniConfig.Logparser.ExePath),
+                                    $('[Error][Config][Script]   Query: {0}' -f $lpQuery)
                                 )
 
-                    try {
-                        
-                        $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
+                    $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
-                        $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                                     -Query $lpQuery `
-                                                     -Switches $logparserArgs
+                    $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                 -Query $lpQuery `
+                                                 -Switches $logparserArgs
 
-                        if ([System.String]::IsNullOrEmpty($lpOutput) -eq $false)
-                        {
-                            $lpOutputCsv = $lpOutput | ConvertFrom-Csv
+                    if ([System.String]::IsNullOrEmpty($lpOutput) -eq $false)
+                    {
+                        $lpOutputCsv = $lpOutput | ConvertFrom-Csv
 
-                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.'s-sitename') -eq $false)
-                            {                                        
-                                if ($lpOutputCsv.'s-sitename' -ne $IniConfig.Website.Sitename)
-                                {
-                                    $returnValue.ErrorMessages += $lpError
-                                    $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'    
-                                }
-
-                            } else {
-
+                        if ([System.String]::IsNullOrEmpty($lpOutputCsv.'s-sitename') -eq $false)
+                        {                                        
+                            if ($lpOutputCsv.'s-sitename' -ne $IniConfig.Website.Sitename)
+                            {
                                 $returnValue.ErrorMessages += $lpError
-                                $returnValue.ErrorMessages += '[Error][Config][Script] No sitename returned. Try running script manually.'    
+                                $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'    
                             }
-                                
+
                         } else {
 
                             $returnValue.ErrorMessages += $lpError
-                            $returnValue.ErrorMessages += '[Error][Config][Script] Try running script manually.'
+                            $returnValue.ErrorMessages += '[Error][Config][Script] No sitename returned. Try running script manually.'    
                         }
-
-                    } catch {
-
-                        $e = $_
+                            
+                    } else {
 
                         $returnValue.ErrorMessages += $lpError
-                        $returnValue.ErrorMessages += $('[Error][Config][Script] Exception: {0}' -f $e.Exception.Message)
+                        $returnValue.ErrorMessages += '[Error][Config][Script] Try running script manually.'
                     }
 
             }       # END validate IIS Log Access
