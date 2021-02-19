@@ -100,8 +100,8 @@ Function Write-EventAlert
     } catch {
         
         $e = $_
-        Write-Host '[Error][Script][Alert] Event log write failed.'
-        Write-Host $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
+        Write-Error -Message '[Error][Script][Alert] Event log write failed.'
+        Write-Error -Message $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
     }
 
 } # End Function Write-EventAlert
@@ -168,8 +168,8 @@ Function Send-SmtpAlert
     } catch {
         
         $e = $_
-        Write-Host '[Error][Script][Alert] Smtp send failed.'
-        Write-Host $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
+        Write-Error -Message '[Error][Script][Alert] Smtp send failed.'
+        Write-Error -Message $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
     }
 
 } # End Function Send-SmtpAlert

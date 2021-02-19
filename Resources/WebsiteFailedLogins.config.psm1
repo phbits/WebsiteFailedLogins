@@ -621,13 +621,10 @@ Function Assert-ValidIniConfig
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Logname) -eq $false)
                             {
-                                try {
-
-                                    Get-WinEvent -LogName $IniConfig.WinEvent.Logname -MaxEvents 1 -ErrorAction Stop | Out-Null
-
-                                } catch {
-
+                                if ([System.Diagnostics.EventLog]::Exists($IniConfig.WinEvent.Logname) -eq $false)
+                                {
                                     $returnValue.ErrorMessages += '[Error][Config][WinEvent] Logname not valid.'
+                                    $returnValue.ErrorMessages += $('[Error][Config][WinEvent]   {0} does not exist.' -f $IniConfig.WinEvent.Logname)
                                 }
 
                             } else {
@@ -842,7 +839,7 @@ Function Assert-ValidIniConfig
                                 Write-EventLog -LogName $IniConfig.WinEvent.Logname `
                                                -Source $IniConfig.WinEvent.Source `
                                                -EntryType $IniConfig.WinEvent.EntryType `
-                                               -EventId 50 `
+                                               -EventId 10````````````````````````````````````````````0 `
                                                -ErrorAction Stop `
                                                -Message 'Write-EventLog success.'
 
