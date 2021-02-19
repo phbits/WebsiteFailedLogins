@@ -839,7 +839,7 @@ Function Assert-ValidIniConfig
                                 Write-EventLog -LogName $IniConfig.WinEvent.Logname `
                                                -Source $IniConfig.WinEvent.Source `
                                                -EntryType $IniConfig.WinEvent.EntryType `
-                                               -EventId 10````````````````````````````````````````````0 `
+                                               -EventId 100 `
                                                -ErrorAction Stop `
                                                -Message 'Write-EventLog success.'
 
