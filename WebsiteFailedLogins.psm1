@@ -74,10 +74,8 @@ Function Invoke-WebsiteFailedLogins
         # Per IP Failed Logins
         $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration
 
-        if ($resultFailedLoginsPerIP.Count -gt 0)
+        if ($returnValue.FailedLoginsPerIP.Count -gt 0)
         {
-            $returnValue.FailedLoginsPerIP = $resultFailedLoginsPerIP
-
             $returnValue.HasResults = $true
 
             foreach ($entry in $resultFailedLoginsPerIP)
@@ -89,10 +87,8 @@ Function Invoke-WebsiteFailedLogins
         # Total Failed Logins
         $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration
 
-        if ($resultTotalFailedLogins.Count -gt 0)
+        if ($returnValue.TotalFailedLogins.Count -gt 0)
         {
-            $returnValue.TotalFailedLogins = $resultTotalFailedLogins
-
             $returnValue.HasResults = $true
 
             Submit-Alert -IniConfig $returnValue.Configuration -AlertData $returnValue.TotalFailedLogins
