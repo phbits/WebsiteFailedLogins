@@ -52,7 +52,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -ge 30)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 31)
             }
         }
 
@@ -837,7 +837,6 @@ Function Assert-ValidIniConfig
                     {
                         if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {                           
-
                             try {
 
                                 Write-EventLog -LogName $IniConfig.WinEvent.Logname `
