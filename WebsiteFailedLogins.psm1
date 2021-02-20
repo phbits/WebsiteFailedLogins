@@ -67,12 +67,12 @@ Function Invoke-WebsiteFailedLogins
         $alertData.Remove('FailedLoginsPerIP')
         $alertData.Remove('TotalFailedLogins')
         
-        Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError
+        Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError -Verbose:$($Verbose)
     
     } else {
 
         # Per IP Failed Logins
-        $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration
+        $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
 
         if ($returnValue.FailedLoginsPerIP.Count -gt 0)
         {
@@ -85,7 +85,7 @@ Function Invoke-WebsiteFailedLogins
         }
 
         # Total Failed Logins
-        $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration
+        $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
 
         if ($returnValue.TotalFailedLogins.Count -gt 0)
         {

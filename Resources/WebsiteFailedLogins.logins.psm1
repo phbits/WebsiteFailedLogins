@@ -1,4 +1,3 @@
-Import-Module $(Join-Path -Path $PSScriptRoot -ChildPath 'WebsiteFailedLogins.alert.psm1')
 Import-Module $(Join-Path -Path $PSScriptRoot -ChildPath 'WebsiteFailedLogins.lp.psm1')
 
 Function Get-FailedLoginsPerIP
@@ -17,7 +16,7 @@ Function Get-FailedLoginsPerIP
         $IniConfig
     )
 
-    $returnValue = @()
+    [System.Object[]] $returnValue = @()
 
     $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig
 
@@ -46,13 +45,13 @@ Function Get-FailedLoginsPerIP
 
         if($resultsObj -is [Array])
         {
-            for ($i=0; $i -lt $resultsObj.Count; $i++)
+            foreach ($entry in $resultsObj)
             {
-                $itemResult = $resultBase
-                $itemResult.ClientIP = $resultsObj[$i].ClientIP
-                $itemResult.FailedLogins = $resultsObj[$i].Hits
+                $entryResult = $resultBase
+                $entryResult.ClientIP = $entry.ClientIP
+                $entryResult.FailedLogins = $entry.Hits
 
-                $returnValue += $itemResult
+                $returnValue += $entryResult
             }
 
         } else {
