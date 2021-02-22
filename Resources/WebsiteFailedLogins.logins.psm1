@@ -7,7 +7,7 @@ Function Get-FailedLoginsPerIP
 
             Gets each Client IP (c-ip) having generated failed logins >= FailedLoginsPerIP since StartTime.
     #>
-    [OutputType('System.Object[]')]
+    [OutputType('System.Collections.Hashtable')]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -16,7 +16,7 @@ Function Get-FailedLoginsPerIP
         $IniConfig
     )
 
-    [System.Object[]] $returnValue = @()
+    $returnValue = @{}
 
     $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig
 
@@ -34,18 +34,20 @@ Function Get-FailedLoginsPerIP
         {
             foreach ($entry in $resultsObj)
             {
-                [System.Object[]] $returnValue += Get-FailedLoginsPerIPResult `
-                                                            -IniConfig $IniConfig `
-                                                            -ClientIP $entry.ClientIP `
-                                                            -FailedLogins $entry.Hits
+                $entryResult = Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
+                                                           -ClientIP $entry.ClientIP `
+                                                           -FailedLogins $entry.Hits
+
+                $returnValue.Add($($entry.ClientIP), $entryResult)
             }
 
         } else {
 
-            [System.Object[]] $returnValue += Get-FailedLoginsPerIPResult `
-                                                            -IniConfig $IniConfig `
-                                                            -ClientIP $resultsObj.ClientIP `
-                                                            -FailedLogins $resultsObj.Hits
+            $resultObjHashtable = Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
+                                                              -ClientIP $resultsObj.ClientIP `
+                                                              -FailedLogins $resultsObj.Hits
+
+            $returnValue.Add($($resultsObj.ClientIP), $resultObjHashtable)
         }
     }
 
