@@ -30,41 +30,67 @@ Function Get-FailedLoginsPerIP
     {
         $resultsObj = $logparserResults | ConvertFrom-Csv
 
-        $resultBase = @{
-                            'FriendlyName'   = $IniConfig.Website.FriendlyName
-                            'ClientIP'       = ''
-                            'FailedLogins'   = ''
-                            'Sitename'       = $IniConfig.Website.Sitename
-                            'IISLogPath'     = $IniConfig.Website.LogPath
-                            'Authentication' = $IniConfig.Website.Authentication
-                            'HttpResponse'   = $IniConfig.Website.HttpResponse
-                            'UrlPath'        = $IniConfig.Website.UrlPath
-                            'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
-                            'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
-                        }
-
         if($resultsObj -is [Array])
         {
             foreach ($entry in $resultsObj)
             {
-                $entryResult = $resultBase
-                $entryResult.ClientIP = $entry.ClientIP
-                $entryResult.FailedLogins = $entry.Hits
-
-                $returnValue += $entryResult
+                $returnValue += Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
+                                                            -ClientIP $entry.ClientIP `
+                                                            -FailedLogins $entry.Hits
             }
 
         } else {
 
-            $resultBase.ClientIP = $resultsObj.ClientIP
-            $resultBase.FailedLogins = $resultsObj.Hits
-            $returnValue += $resultBase
+            $returnValue += Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
+                                                        -ClientIP $resultsObj.ClientIP `
+                                                        -FailedLogins $resultsObj.Hits
         }
     }
 
     return $returnValue
 
 } # End Function Get-FailedLoginsPerIP
+
+Function Get-FailedLoginsPerIPResult
+{
+    <#
+        .SYNOPSIS
+
+            Returns FailedLoginsPerIP result variable.
+    #>
+    [OutputType('System.Collections.Hashtable')]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Hashtable]
+        # INI Configuration.
+        $IniConfig
+        ,
+        [Parameter(Mandatory=$true)]
+        [System.String]
+        # Client IP
+        $ClientIP
+        ,
+        [Parameter(Mandatory=$true)]
+        [System.String]
+        # Failed Logins
+        $FailedLogins
+    )
+
+    return @{
+                'FriendlyName'   = $IniConfig.Website.FriendlyName
+                'ClientIP'       = $ClientIP
+                'FailedLogins'   = $FailedLogins
+                'Sitename'       = $IniConfig.Website.Sitename
+                'IISLogPath'     = $IniConfig.Website.LogPath
+                'Authentication' = $IniConfig.Website.Authentication
+                'HttpResponse'   = $IniConfig.Website.HttpResponse
+                'UrlPath'        = $IniConfig.Website.UrlPath
+                'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
+                'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+            }
+
+} # End Function Get-FailedLoginsPerIPResult
 
 Function Get-TotalFailedLogins
 {
