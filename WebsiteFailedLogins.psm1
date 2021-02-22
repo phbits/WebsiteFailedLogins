@@ -78,9 +78,9 @@ Function Invoke-WebsiteFailedLogins
         {
             $returnValue.HasResults = $true
 
-            foreach ($entry in $returnValue.FailedLoginsPerIP)
+            foreach ($key in $returnValue.FailedLoginsPerIP.Keys)
             {
-                Submit-Alert -IniConfig $returnValue.Configuration -AlertData $entry
+                Submit-Alert -IniConfig $returnValue.Configuration -AlertData $($returnValue.FailedLoginsPerIP[$key])
             }
         }
 
