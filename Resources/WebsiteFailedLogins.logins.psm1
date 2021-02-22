@@ -34,16 +34,18 @@ Function Get-FailedLoginsPerIP
         {
             foreach ($entry in $resultsObj)
             {
-                $returnValue += Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
+                [System.Object[]] $returnValue += Get-FailedLoginsPerIPResult `
+                                                            -IniConfig $IniConfig `
                                                             -ClientIP $entry.ClientIP `
                                                             -FailedLogins $entry.Hits
             }
 
         } else {
 
-            $returnValue += Get-FailedLoginsPerIPResult -IniConfig $IniConfig `
-                                                        -ClientIP $resultsObj.ClientIP `
-                                                        -FailedLogins $resultsObj.Hits
+            [System.Object[]] $returnValue += Get-FailedLoginsPerIPResult `
+                                                            -IniConfig $IniConfig `
+                                                            -ClientIP $resultsObj.ClientIP `
+                                                            -FailedLogins $resultsObj.Hits
         }
     }
 
