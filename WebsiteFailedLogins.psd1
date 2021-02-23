@@ -2,7 +2,7 @@
 
 RootModule = 'WebsiteFailedLogins.psm1'
 
-ModuleVersion = '1.0'
+ModuleVersion = '2.0'
 
 GUID = '12e3c270-ef13-42bb-bea3-40b8cf44a49f'
 
@@ -20,25 +20,31 @@ This PowerShell module was created to identify the following scenarios affecting
 It leverages Microsoft Logparser and a configuration file to parse the target website's IIS logs. When a threshold is met or exceeded an alert is generated via standard out, email, and/or written to a Windows Event Log. No changes are needed on the webserver. This module can even run on a separate system where there's access to the IIS logs.
 '@
 
-NestedModules = @(  'Resources\WebsiteFailedLogins.alert.psm1',
+NestedModules = @(
+                    'Resources\WebsiteFailedLogins.alert.psm1',
                     'Resources\WebsiteFailedLogins.config.psm1',
-                    'Resources\WebsiteFailedLogins.logins.psm1'   )
+                    'Resources\WebsiteFailedLogins.logins.psm1'
+                )
 
-FunctionsToExport = 'Invoke-WebsiteFailedLogins',
-					'Get-WebsiteFailedLoginsReadme',
-					'Copy-WebsiteFailedLoginsReadme',
-					'Get-WebsiteFailedLoginsDefaultConfiguration',
-					'Copy-WebsiteFailedLoginsDefaultConfiguration'
+FunctionsToExport = @(
+                        'Invoke-WebsiteFailedLogins',
+                        'Get-WebsiteFailedLoginsReadme',
+                        'Copy-WebsiteFailedLoginsReadme',
+                        'Get-WebsiteFailedLoginsDefaultConfiguration',
+                        'Copy-WebsiteFailedLoginsDefaultConfiguration'
+                    )
 
-FileList = 'LICENSE',
-           'README.md',
-           'WebsiteFailedLogins.psd1',
-           'WebsiteFailedLogins.psm1',
-           'Resources\WebsiteFailedLogins_default.ini',
-           'Resources\WebsiteFailedLogins.alert.psm1',
-           'Resources\WebsiteFailedLogins.config.psm1',
-           'Resources\WebsiteFailedLogins.logins.psm1',
-           'Resources\WebsiteFailedLogins.lp.psm1'
+FileList = @(
+                'LICENSE',
+                'README.md',
+                'WebsiteFailedLogins.psd1',
+                'WebsiteFailedLogins.psm1',
+                'Resources\WebsiteFailedLogins_default.ini',
+                'Resources\WebsiteFailedLogins.alert.psm1',
+                'Resources\WebsiteFailedLogins.config.psm1',
+                'Resources\WebsiteFailedLogins.logins.psm1',
+                'Resources\WebsiteFailedLogins.lp.psm1'
+            )
 
 PrivateData = @{
 
@@ -55,4 +61,7 @@ PrivateData = @{
     } # End of PSData hashtable
 
 } # End of PrivateData hashtable
+
+HelpInfoURI = 'https://github.com/phbits/WebsiteFailedLogins/wiki'
+
 }

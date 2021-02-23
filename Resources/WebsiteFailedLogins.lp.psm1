@@ -45,7 +45,7 @@ Function Get-LogparserQuery
     if ($TotalFailedLogins -eq $false)
     {
         $returnQuery += 'GROUP BY ClientIP HAVING Hits >= {0} ORDER BY Hits DESC"' -f $IniConfig.Website.FailedLoginsPerIP
-    } 
+    }
 
     if ($returnQuery.TrimEnd().EndsWith('"') -eq $false)
     {
@@ -60,8 +60,11 @@ function Invoke-Logparser
 {
     <#
         .SYNOPSIS
+
             Private function that wraps Logparser.exe
+
         .LINK
+
             https://github.com/dsccommunity/AuditPolicyDsc/blob/dev/DSCResources/AuditPolicyResourceHelper/AuditPolicyResourceHelper.psm1
     #>
 
@@ -93,7 +96,7 @@ function Invoke-Logparser
         $process.StartInfo.RedirectStandardOutput = $true
         $process.StartInfo.UseShellExecute = $false
         $process.StartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
-        
+
         if ($process.Start() -eq $true)
         {
             [string] $logparserReturn = $process.StandardOutput.ReadToEnd()

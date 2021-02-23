@@ -2,7 +2,7 @@ Function Submit-Alert
 {
     <#
         .SYNOPSIS
-        
+
             Submits alert to Windows Event Log or via SMTP.
     #>
     [CmdletBinding()]
@@ -98,7 +98,7 @@ Function Write-EventAlert
             Write-EventLog @eventProperties
 
     } catch {
-        
+
         $e = $_
         Write-Error -Message '[Error][Script][Alert] Event log write failed.'
         Write-Error -Message $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
@@ -166,7 +166,7 @@ Function Send-SmtpAlert
             Send-MailMessage @eventProperties
 
     } catch {
-        
+
         $e = $_
         Write-Error -Message '[Error][Script][Alert] Smtp send failed.'
         Write-Error -Message $('[Error][Script][Alert] Exception: {0}' -f $e.Exception.Message)
@@ -182,6 +182,7 @@ Function Get-FormattedAlertData
             Formats the alert data into desired format.
     #>
     [CmdletBinding()]
+    [OutputType('System.String')]
     param(
             [Parameter(Mandatory=$true)]
             [System.String]
@@ -208,6 +209,7 @@ Function Get-FormattedAlertData
                 return $($stringData -Join [System.Environment]::NewLine)
         }
     }
+
 } # End Function Get-FormattedAlertData
 
 Export-ModuleMember -Function 'Submit-Alert'

@@ -38,7 +38,7 @@ Function Get-FailedLoginsPerIP
                                                            -ClientIP $entry.ClientIP `
                                                            -FailedLogins $entry.Hits
 
-                $returnValue.Add($($entry.ClientIP), $entryResult)
+                $returnValue.Add($entry.ClientIP, $entryResult)
             }
 
         } else {
@@ -47,7 +47,7 @@ Function Get-FailedLoginsPerIP
                                                               -ClientIP $resultsObj.ClientIP `
                                                               -FailedLogins $resultsObj.Hits
 
-            $returnValue.Add($($resultsObj.ClientIP), $resultObjHashtable)
+            $returnValue.Add($resultsObj.ClientIP, $resultObjHashtable)
         }
     }
 

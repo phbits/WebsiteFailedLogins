@@ -6,10 +6,6 @@ Function Assert-ValidIniConfig
         .SYNOPSIS
 
             Validates settings in the configuration file.
-
-        .OUTPUTS
-
-            System.Boolean
     #>
     [CmdletBinding()]
     [OutputType('System.Collections.Hashtable')]
@@ -38,7 +34,7 @@ Function Assert-ValidIniConfig
     do {
 
         $i++
-        
+
         if ($returnValue.ErrorMessages.Count -gt 0)
         {
             $i = 1000
@@ -60,7 +56,7 @@ Function Assert-ValidIniConfig
 
         switch($i)
         {
-            1 {     
+            1 {
                     # BEGIN validate [INI]
 
                     if ($IniConfig.Count -le 1)
@@ -170,7 +166,7 @@ Function Assert-ValidIniConfig
                                 if ($logPathRef.FullName.EndsWith('\'))
                                 {
                                     $IniConfig.Logparser.Add('LogPath',$('{0}*' -f $logPathRef.FullName))
-                                
+
                                 } else {
 
                                     $IniConfig.Logparser.Add('LogPath',$('{0}\*' -f $logPathRef.FullName))
@@ -209,7 +205,7 @@ Function Assert-ValidIniConfig
 
                                 $returnValue.ErrorMessages += '[Error][Config][Website] FailedLoginsPerIP must be a positive number.'
                             }
-                        
+
                         } else {
 
                             $returnValue.ErrorMessages += '[Error][Config][Website] FailedLoginsPerIP must be a positive number.'
@@ -238,7 +234,7 @@ Function Assert-ValidIniConfig
 
                                 $returnValue.ErrorMessages += '[Error][Config][Website] TotalFailedLogins must be a positive number.'
                             }
-                        
+
                         } else {
 
                             $returnValue.ErrorMessages += '[Error][Config][Website] TotalFailedLogins must be a positive number.'
@@ -269,7 +265,7 @@ Function Assert-ValidIniConfig
 
                                 $returnValue.ErrorMessages += '[Error][Config][Website] StartTime must be a positive number.'
                             }
-                        
+
                         } else {
 
                             $returnValue.ErrorMessages += '[Error][Config][Website] StartTime must be a positive number.'
@@ -289,7 +285,7 @@ Function Assert-ValidIniConfig
                         if (Test-Path -LiteralPath $IniConfig.Logparser.Path)
                         {
                             $IniConfig.Logparser.Add('ExePath', $IniConfig.Logparser.Path)
-                            
+
                             $lp = Get-Item -LiteralPath $IniConfig.Logparser.ExePath
 
                             if ($lp.PSIsContainer)
@@ -309,17 +305,17 @@ Function Assert-ValidIniConfig
                                 }
 
                             } catch {
-                                
+
                                 $e = $_
                                 $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.exe validation error.'
                                 $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
                             }
-                        
+
                         } else {
 
                             $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not valid.'
                         }
-                    
+
                     } else {
 
                         $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not specified.'
@@ -344,7 +340,7 @@ Function Assert-ValidIniConfig
                     }
 
                 } catch {
-                    
+
                     $e = $_
                     $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.dll validation error.'
                     $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
@@ -358,7 +354,7 @@ Function Assert-ValidIniConfig
                     {
                         # test launch of logparser
                         try {
-                            
+
                             $lpQuery = "`"SELECT FileVersion FROM `'{0}`'`"" -f $IniConfig.Logparser.ExePath
 
                             $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
@@ -368,7 +364,7 @@ Function Assert-ValidIniConfig
                                                                        -Switches $logparserArgs
 
                             if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
-                            {                                        
+                            {
                                 if ($lpFileVersion.Trim() -eq 'Task aborted.')
                                 {
                                     $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
@@ -489,17 +485,17 @@ Function Assert-ValidIniConfig
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Subject))
                             {
                                 $returnValue.ErrorMessages += '[Error][SMTP] SUBJECT not specified.'
-                            
+
                             } else {
 
                                 try {
 
                                     $msg = [System.Net.Mail.MailMessage]::new()
-                                
+
                                     $msg.Subject = $IniConfig.Smtp.Subject
-                                    
+
                                     $msg.Dispose()
-                                    
+
                                     Remove-Variable -Name msg
 
                                 } catch {
@@ -532,7 +528,7 @@ Function Assert-ValidIniConfig
 
                                         $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
                                     }
-                        
+
                                 } else {
 
                                     $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
@@ -713,7 +709,7 @@ Function Assert-ValidIniConfig
 
                                         $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId must be a positive number.'
                                     }
-                        
+
                                 } else {
 
                                     $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId must be a positive number.'
@@ -755,7 +751,7 @@ Function Assert-ValidIniConfig
 
                                         $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId must be a positive number.'
                                     }
-                        
+
                                 } else {
 
                                     $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId must be a positive number.'
@@ -807,19 +803,19 @@ Function Assert-ValidIniConfig
                         $lpOutputCsv = $lpOutput | ConvertFrom-Csv
 
                         if ([System.String]::IsNullOrEmpty($lpOutputCsv.'s-sitename') -eq $false)
-                        {                                        
+                        {
                             if ($lpOutputCsv.'s-sitename' -ne $IniConfig.Website.Sitename)
                             {
                                 $returnValue.ErrorMessages += $lpError
-                                $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'    
+                                $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'
                             }
 
                         } else {
 
                             $returnValue.ErrorMessages += $lpError
-                            $returnValue.ErrorMessages += '[Error][Config][Script] No sitename returned. Try running script manually.'    
+                            $returnValue.ErrorMessages += '[Error][Config][Script] No sitename returned. Try running script manually.'
                         }
-                            
+
                     } else {
 
                         $returnValue.ErrorMessages += $lpError
@@ -833,7 +829,7 @@ Function Assert-ValidIniConfig
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
                         if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {                           
+                        {
                             try {
 
                                 Write-EventLog -LogName $IniConfig.WinEvent.Logname `

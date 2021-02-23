@@ -1,4 +1,4 @@
-# Require TLS1.2 for all communications
+﻿# Require TLS1.2 for all communications
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Function Invoke-WebsiteFailedLogins
@@ -11,9 +11,9 @@ Function Invoke-WebsiteFailedLogins
         .DESCRIPTION
 
             Generates an alert for:
-                
+
                 - Each IP address meeting or exceeding the threshold FailedLoginsPerIP
-                
+
                 - When the total failed logins threshold (TotalFailedLogins) is met or exceeded
 
             Automate this by running it as a scheduled task. See README.md for details or run the following command:
@@ -29,7 +29,7 @@ Function Invoke-WebsiteFailedLogins
             System.Collections.Hashtable
     #>
     [CmdletBinding()]
-    [OutputType('System.String[]')]
+    [OutputType('System.Collections.Hashtable')]
     param(
             [Parameter(Mandatory=$true)]
 			[ValidateScript({Test-Path -LiteralPath $_})]
@@ -42,7 +42,7 @@ Function Invoke-WebsiteFailedLogins
             # Performs the minimum validation checks against the configuration file. Use this switch after all configuration errors have been resolved.
             $RunningConfig
     )
-   
+
     $returnValue = @{
                         'FailedLoginsPerIP' = @()
                         'TotalFailedLogins' = @{}
@@ -55,7 +55,7 @@ Function Invoke-WebsiteFailedLogins
     $iniConfig = Get-IniConfig -Path $Configuration
 
     $configTestResult = Assert-ValidIniConfig -IniConfig $iniConfig -RunningConfig:$($RunningConfig) -Verbose:$($Verbose)
-    
+
     $returnValue.Configuration = $configTestResult.Configuration
 
     if ($configTestResult.HasError)
@@ -66,9 +66,9 @@ Function Invoke-WebsiteFailedLogins
         $alertData = $returnValue
         $alertData.Remove('FailedLoginsPerIP')
         $alertData.Remove('TotalFailedLogins')
-        
+
         Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError -Verbose:$($Verbose)
-    
+
     } else {
 
         # Per IP Failed Logins
@@ -108,7 +108,7 @@ Function Get-WebsiteFailedLoginsREADME
     #>
     [OutputType('System.String[]')]
     [CmdletBinding()]
-    param( 
+    param(
             [Parameter(Mandatory=$false)]
             [System.String]
             # Section to return.
@@ -116,7 +116,7 @@ Function Get-WebsiteFailedLoginsREADME
     )
 
 	try {
-        
+
         $readMePath = Join-Path -Path $PSScriptRoot -ChildPath 'README.md'
 
 		$readMeFile = Get-Item -LiteralPath $readMePath -ErrorAction Stop
@@ -136,21 +136,21 @@ Function Get-WebsiteFailedLoginsREADME
             for ($i=0; $i -lt $readMeContent.Length; $i++)
             {
                 $line = $readMeContent[$i]
-                
+
                 if ($line.Trim().StartsWith('#'))
                 {
                     $printLine = $false
                 }
-                
+
                 if ([System.String]::IsNullOrEmpty($line) -eq $false)
-                {                                
+                {
                     if ($line.ToLower().Contains($sectionKeywordLower))
                     {
                         if ($printLine -eq $false)
                         {
                             Write-Output $readMeContent[$i - 1]
                         }
-                        
+
                         $printLine = $true
                     }
                 }
@@ -163,9 +163,9 @@ Function Get-WebsiteFailedLoginsREADME
         }
 
 	} catch {
-	
+
 		$e = $_
-		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Error -Message "$('[ERROR][Exception] {0}' -f $e.Exception.Message)"
 	}
 
 } # End Function Get-WebsiteFailedLoginsReadme
@@ -178,7 +178,7 @@ Function Copy-WebsiteFailedLoginsREADME
             Copy the WebsiteFailedLogins README file (README.md) to the destination folder.
     #>
     [CmdletBinding()]
-    param( 
+    param(
 			[Parameter(Mandatory=$false)]
             [ValidateScript({Test-Path -LiteralPath $_ -PathType Container})]
 			[string]
@@ -195,9 +195,9 @@ Function Copy-WebsiteFailedLoginsREADME
 		Copy-Item -Path $readMeFile.FullName -Destination $DestinationFolder
 
 	} catch {
-	
+
 		$e = $_
-		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Error -Message "$('[ERROR][Exception] {0}' -f $e.Exception.Message)"
 	}
 
 } # End Function Copy-WebsiteFailedLoginsReadme
@@ -222,13 +222,13 @@ Function Get-WebsiteFailedLoginsDefaultConfiguration
 		$configFile = Get-Item -LiteralPath $defaultConfigPath -ErrorAction Stop
 
         [string[]] $configContents = Get-Content -LiteralPath $configFile.FullName
-        
+
         return $configContents
 
 	} catch {
 
 		$e = $_
-		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Error -Message "$('[ERROR][Exception] {0}' -f $e.Exception.Message)"
 	}
 
 } # End Function Get-WebsiteFailedLoginsDefaultConfiguration
@@ -241,7 +241,7 @@ Function Copy-WebsiteFailedLoginsDefaultConfiguration
             Copy the WebsiteFailedLogins default configuration file to the destination folder.
     #>
     [CmdletBinding()]
-    param( 
+    param(
 			[Parameter(Mandatory=$false)]
 			[ValidateScript({Test-Path -LiteralPath $_ -PathType Container})]
             [string]
@@ -254,15 +254,15 @@ Function Copy-WebsiteFailedLoginsDefaultConfiguration
         $defaultConfigPathFolder = Join-Path -Path $PSScriptRoot -ChildPath 'Resources'
 
         $defaultConfigPath = Join-Path -Path $defaultConfigPathFolder -ChildPath 'WebsiteFailedLogins_default.ini'
-    
+
 		$configFile = Get-Item -LiteralPath $defaultConfigPath -ErrorAction Stop
 
 		Copy-Item -Path $configFile.FullName -Destination $DestinationFolder
 
 	} catch {
-	
+
 		$e = $_
-		Write-Host $('[ERROR] {0}' -f $e.Exception.Message)
+		Write-Error -Message "$('[ERROR][Exception] {0}' -f $e.Exception.Message)"
 	}
 
 } # End Function Copy-WebsiteFailedLoginsDefaultConfiguration
