@@ -789,8 +789,6 @@ Function Assert-ValidIniConfig
 
                     $fullLpCmd = "$($IniConfig.Logparser.ExePath) $($logparserArgs -join ' ') $($lpQuery)"
 
-                    Write-Verbose -Message "  $fullLpCmd"
-
                     $lpError = @(
                                     '[Error][Config][Script] Full Logparser command:',
                                     $('[Error][Config][Script]   {0}' -f $fullLpCmd)
@@ -811,10 +809,10 @@ Function Assert-ValidIniConfig
 
                         foreach ($logField in $iisLogFields)
                         {
-                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.$($logField)) -eq $true)
+                            if ([System.String]::IsNullOrEmpty($($lpOutputCsv.$($logField))) -eq $true)
                             {
                                 $iisLogFieldError = $true
-                                $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
+                                $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field $logField not being logged."
                             }
                         }
 
