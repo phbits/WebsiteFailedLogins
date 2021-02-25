@@ -805,13 +805,13 @@ Function Assert-ValidIniConfig
                         $lpOutputCsv = $lpOutput | ConvertFrom-Csv
 
                         # validate IIS logging field
-                        $iisLogFields = @( 'date','time','c-ip','s-sitename','cs-method','cs-uri-stem','sc-status' )
+                        $iisLogFields = @( "'date'","'time'","'c-ip'","'s-sitename'","'cs-method'","'cs-uri-stem'","'sc-status'" )
 
                         $iisLogFieldError = $false
 
                         foreach ($logField in $iisLogFields)
                         {
-                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.$("'$logField'")) -eq $true)
+                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.$($logField)) -eq $true)
                             {
                                 $iisLogFieldError = $true
                                 $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
