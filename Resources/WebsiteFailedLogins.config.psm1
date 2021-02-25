@@ -783,9 +783,9 @@ Function Assert-ValidIniConfig
 
             28 {    # BEGIN validate IIS Log Access & verify logging field
 
-                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'`""
+                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' ORDER BY date, time DESC`""
 
-                    $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
+                    $logparserArgs = @('-recurse:-1','-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
                     $fullLpCmd = "$($IniConfig.Logparser.ExePath) $($logparserArgs -join ' ') $($lpQuery)"
 
