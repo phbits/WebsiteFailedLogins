@@ -797,7 +797,7 @@ Function Assert-ValidIniConfig
 
                     $lpError = @(
                                     '[Error][Config][Script] Full Logparser command:',
-                                    $('[Error][Config][Script]   {0} {1} {3}' -f $IniConfig.Logparser.ExePath,$($logparserArgs -join ' '),$lpQuery)
+                                    $('[Error][Config][Script]   {0} {1} {3}' -f $($IniConfig.Logparser.ExePath),$($logparserArgs -join ' '),$lpQuery)
                                 )
 
                     $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
