@@ -781,18 +781,24 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
-            28 {    # BEGIN validate IIS Log Access
+            28 {    # BEGIN validate IIS Log Access & verify logging field
+
+                date
+                time
+                c-ip
+                s-sitename
+                cs-method
+                cs-uri-stem
+                sc-status
 
                     $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'`""
 
-                    $lpError = @(
-                                    '[Error][Config][Script] Failed getting valid IIS log entry',
-                                    $('[Error][Config][Script]   Sitename: {0}' -f $IniConfig.Website.Sitename.ToUpper()),
-                                    $('[Error][Config][Script]   Logparser.exe path: {0}' -f $IniConfig.Logparser.ExePath),
-                                    $('[Error][Config][Script]   Query: {0}' -f $lpQuery)
-                                )
-
                     $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
+
+                    $lpError = @(
+                                    '[Error][Config][Script] Full Logparser command:',
+                                    $('[Error][Config][Script]   {0} {1} {3}' -f $IniConfig.Logparser.ExePath,$($logparserArgs -join ' '),$lpQuery)
+                                )
 
                     $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
                                                  -Query $lpQuery `
@@ -802,27 +808,33 @@ Function Assert-ValidIniConfig
                     {
                         $lpOutputCsv = $lpOutput | ConvertFrom-Csv
 
-                        if ([System.String]::IsNullOrEmpty($lpOutputCsv.'s-sitename') -eq $false)
+                        # validate IIS logging field
+                        $iisLogFields = @( 'date','time','c-ip','s-sitename','cs-method','cs-uri-stem','sc-status' )
+
+                        $iisLogFieldError = $false
+
+                        foreach ($logField in $iisLogFields)
                         {
-                            if ($lpOutputCsv.'s-sitename' -ne $IniConfig.Website.Sitename)
+                            if ([System.String]::IsNullOrEmpty($lpOutputCsv.$("'$logField'")) -eq $true)
                             {
-                                $returnValue.ErrorMessages += $lpError
-                                $returnValue.ErrorMessages += '[Error][Config][Script] Invalid sitename returned. Try running script manually.'
+                                $iisLogFieldError = $true
+                                $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
                             }
+                        }
 
-                        } else {
-
-                            $returnValue.ErrorMessages += $lpError
-                            $returnValue.ErrorMessages += '[Error][Config][Script] No sitename returned. Try running script manually.'
+                        if ($iisLogFieldError -eq $true)
+                        {
+                            $returnValue.ErrorMessages = $lpError + $returnValue.ErrorMessages
+                            $returnValue.ErrorMessages += '[Error][Config][Script] https://github.com/phbits/WebsiteFailedLogins/wiki/Prerequisites'
                         }
 
                     } else {
 
                         $returnValue.ErrorMessages += $lpError
-                        $returnValue.ErrorMessages += '[Error][Config][Script] Try running script manually.'
+                        $returnValue.ErrorMessages += '[Error][Config][Script] Failed to get an IIS log record.'
                     }
 
-            }       # END validate IIS Log Access
+            }       # END validate IIS Log Access & verify logging field
 
             29 {    # BEGIN validate [WinEvent] Write Start
 
