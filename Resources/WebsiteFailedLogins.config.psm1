@@ -783,21 +783,17 @@ Function Assert-ValidIniConfig
 
             28 {    # BEGIN validate IIS Log Access & verify logging field
 
-                date
-                time
-                c-ip
-                s-sitename
-                cs-method
-                cs-uri-stem
-                sc-status
-
                     $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)'`""
 
                     $logparserArgs = @('-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
+                    $fullLpCmd = "$($IniConfig.Logparser.ExePath) $($logparserArgs -join ' ') $($lpQuery)"
+
+                    Write-Verbose -Message "  $fullLpCmd"
+
                     $lpError = @(
                                     '[Error][Config][Script] Full Logparser command:',
-                                    $('[Error][Config][Script]   {0} {1} {3}' -f $($IniConfig.Logparser.ExePath),$($logparserArgs -join ' '),$lpQuery)
+                                    $('[Error][Config][Script]   {0}' -f $fullLpCmd)
                                 )
 
                     $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
