@@ -817,7 +817,7 @@ Function Assert-ValidIniConfig
 
                             } else {
 
-                                $propertyValue = $lpOutputCsv.$("'$(logField)'")
+                                $propertyValue = $lpOutputCsv.$("'$($logField)'")
 
                                 if ([System.String]::IsNullOrEmpty($propertyValue) -eq $true)
                                 {
