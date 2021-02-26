@@ -814,6 +814,16 @@ Function Assert-ValidIniConfig
                             {
                                 $iisLogFieldError = $true
                                 $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field $logField not being logged."
+
+                            } else {
+
+                                $propertyValue = $lpOutputCsv.$("'$(logField)'")
+
+                                if ([System.String]::IsNullOrEmpty($propertyValue) -eq $true)
+                                {
+                                    $iisLogFieldError = $true
+                                    $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field $logField not being logged."
+                                }
                             }
                         }
 
