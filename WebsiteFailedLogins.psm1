@@ -43,13 +43,15 @@ Function Invoke-WebsiteFailedLogins
             $RunningConfig
     )
 
+    $currentVerbosePreference = $VerbosePreference
+
     if ($Verbose)
     {
-        $script:VerbosePreference = 'Continue'
+        $VerbosePreference = 'Continue'
 
     } else {
 
-        $script:VerbosePreference = 'SilentlyContinue'
+        $VerbosePreference = 'SilentlyContinue'
     }
 
     $returnValue = @{
@@ -111,6 +113,8 @@ Function Invoke-WebsiteFailedLogins
             Submit-Alert -IniConfig $returnValue.Configuration -AlertData $returnValue.TotalFailedLogins
         }
     }
+
+    $VerbosePreference = $currentVerbosePreference
 
     return $returnValue
 
