@@ -29,7 +29,7 @@ Function Assert-ValidIniConfig
                         'Configuration' = @{}
                     }
 
-    [int[]] $minimumChecks = 1,7,8,9,10,11,19,25,26,27
+    [int[]] $minimumChecks = 1,7,8,9,10,11,19,26,27,28
 
     do {
 
@@ -48,7 +48,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 31)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 32)
             }
         }
 
@@ -355,7 +355,7 @@ Function Assert-ValidIniConfig
                         # test launch of logparser
                         try {
 
-                            $lpQuery = "`"SELECT FileVersion FROM `'{0}`'`"" -f $IniConfig.Logparser.ExePath
+                            $lpQuery = "`"SELECT FileVersion FROM '{0}'`"" -f $IniConfig.Logparser.ExePath
 
                             $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
 
@@ -609,7 +609,46 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP] CredentialXml
 
-            22 {    # BEGIN validate [WinEvent] Logname
+            22 {    # BEGIN validate [SMTP] Send test alert
+
+                if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
+                {
+                    if ($IniConfig.Alert.Method -imatch 'Smtp')
+                    {
+                        $emailSplat = @{
+                            'To'          = $IniConfig.Smtp.To
+                            'From'        = $IniConfig.Smtp.From
+                            'Subject'     = $('[TEST] {0}' -f $IniConfig.Smtp.Subject)
+                            'SmtpServer'  = $IniConfig.Smtp.Server
+                            'Port'        = $IniConfig.Smtp.Port
+                            'Body'        = "Test message to validate configuration.`n`nUse '-RunningConfig' switch once all errors have been fixed."
+                            'UseSsl'      = $true
+                            'ErrorAction' = 'Stop'
+                        }
+
+                        if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
+                        {
+                            $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $credFile.FullName))
+                        }
+
+                        try {
+
+                            Send-MailMessage @emailSplat
+
+                            Remove-Variable -Name emailSplat
+
+                        } catch {
+
+                            $e = $_
+                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] Send test message failed.'
+                        }
+                    }
+                }
+
+            }       # END validate [SMTP] Send test alert
+
+            23 {    # BEGIN validate [WinEvent] Logname
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -632,7 +671,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Logname
 
-            23 {    # BEGIN validate [WinEvent] Source
+            24 {    # BEGIN validate [WinEvent] Source
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -658,7 +697,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Source
 
-            24 {    # BEGIN validate [WinEvent] EntryType
+            25 {    # BEGIN validate [WinEvent] EntryType
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -682,7 +721,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] EntryType
 
-            25 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
+            26 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -724,7 +763,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] FailedLoginsPerIPEventId
 
-            26 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
+            27 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -766,7 +805,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] TotalFailedLoginsEventId
 
-            27 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
+            28 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -781,9 +820,11 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
 
-            28 {    # BEGIN validate IIS Log Access & verify logging field
+            29 {    # BEGIN validate IIS Log Access & verify logging fields
 
-                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' ORDER BY date, time DESC`""
+                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' " + `
+                               "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
+                               "ORDER BY date, time DESC`""
 
                     $logparserArgs = @('-recurse:-1','-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
@@ -809,20 +850,21 @@ Function Assert-ValidIniConfig
 
                         foreach ($logField in $iisLogFields)
                         {
-                            #if ([System.String]::IsNullOrEmpty($($lpOutputCsv.$($logField))) -eq $true)
+                            # check if field exists
                             if ($null -eq $(Get-Member -InputObject $lpOutputCsv -Name $logField -MemberType NoteProperty))
                             {
                                 $iisLogFieldError = $true
-                                $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field $logField not being logged."
+                                $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
 
                             } else {
 
+                                # is a value being logged
                                 $propertyValue = $lpOutputCsv | Select-Object -ExpandProperty $logField
 
                                 if ([System.String]::IsNullOrEmpty($propertyValue) -eq $true)
                                 {
                                     $iisLogFieldError = $true
-                                    $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field $logField not being logged."
+                                    $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
                                 }
                             }
                         }
@@ -839,9 +881,9 @@ Function Assert-ValidIniConfig
                         $returnValue.ErrorMessages += '[Error][Config][Script] Failed to get an IIS log record.'
                     }
 
-            }       # END validate IIS Log Access & verify logging field
+            }       # END validate IIS Log Access & verify logging fields
 
-            29 {    # BEGIN validate [WinEvent] Write Start
+            30 {    # BEGIN validate [WinEvent] Write Start
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
