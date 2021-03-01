@@ -193,9 +193,9 @@ Function Assert-ValidIniConfig
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.FailedLoginsPerIP) -eq $false)
                     {
-                        [int] $intPerIP = 0
+                        [Int] $intPerIP = 0
 
-                        if ([System.Int32]::TryParse($IniConfig.Website.FailedLoginsPerIP, [ref]$intPerIP))
+                        if ([System.Int32]::TryParse($IniConfig.Website.FailedLoginsPerIP, [ref] $intPerIP))
                         {
                             if ($intPerIP -gt 0)
                             {
@@ -222,9 +222,9 @@ Function Assert-ValidIniConfig
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.TotalFailedLogins) -eq $false)
                     {
-                        [Int32] $intTotal = 0
+                        [Int] $intTotal = 0
 
-                        if ([System.Int32]::TryParse($IniConfig.Website.TotalFailedLogins, [ref]$intTotal))
+                        if ([System.Int32]::TryParse($IniConfig.Website.TotalFailedLogins, [ref] $intTotal))
                         {
                             if ($intTotal -gt 0)
                             {
@@ -251,9 +251,9 @@ Function Assert-ValidIniConfig
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Website.StartTime) -eq $false)
                     {
-                        [int] $intSeconds = 0
+                        [Int] $intSeconds = 0
 
-                        if ([System.Int32]::TryParse($IniConfig.Website.StartTime, [ref]$intSeconds))
+                        if ([System.Int32]::TryParse($IniConfig.Website.StartTime, [ref] $intSeconds))
                         {
                             if ($intSeconds -gt 0)
                             {
@@ -519,9 +519,9 @@ Function Assert-ValidIniConfig
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Port) -eq $false)
                             {
-                                [int] $intPort = 0
+                                [Int] $intPort = 0
 
-                                if ([System.Int32]::TryParse($IniConfig.Smtp.Port, [ref]$intPort))
+                                if ([System.Int32]::TryParse($IniConfig.Smtp.Port, [ref] $intPort))
                                 {
                                     if ($intPort -gt 0)
                                     {
@@ -736,9 +736,9 @@ Function Assert-ValidIniConfig
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.FailedLoginsPerIPEventId) -eq $false)
                             {
-                                [int] $intFailedLoginsPerIPEventId = 0
+                                [Int] $intFailedLoginsPerIPEventId = 0
 
-                                if ([System.Int32]::TryParse($IniConfig.WinEvent.FailedLoginsPerIPEventId, [ref]$intFailedLoginsPerIPEventId))
+                                if ([System.Int32]::TryParse($IniConfig.WinEvent.FailedLoginsPerIPEventId, [ref] $intFailedLoginsPerIPEventId))
                                 {
                                     if ($intFailedLoginsPerIPEventId -gt 0)
                                     {
@@ -778,9 +778,9 @@ Function Assert-ValidIniConfig
                         {
                             if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.TotalFailedLoginsEventId) -eq $false)
                             {
-                                [int] $intTotalFailedLoginsEventId = 0
+                                [Int] $intTotalFailedLoginsEventId = 0
 
-                                if ([System.Int32]::TryParse($IniConfig.WinEvent.TotalFailedLoginsEventId, [ref]$intTotalFailedLoginsEventId))
+                                if ([System.Int32]::TryParse($IniConfig.WinEvent.TotalFailedLoginsEventId, [ref] $intTotalFailedLoginsEventId))
                                 {
                                     if ($intTotalFailedLoginsEventId -gt 0)
                                     {
