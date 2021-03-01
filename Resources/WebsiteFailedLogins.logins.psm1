@@ -129,10 +129,16 @@ Function Get-TotalFailedLogins
 
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
     {
+        Write-Verbose -Message 'Not null.'
+
         if ([System.Int32]::TryParse($logparserResult, [ref] $totalHits))
         {
+            Write-Verbose -Message 'Parse successful.'
+
             if ($totalHits -ge $IniConfig.Website.TotalFailedLogins)
             {
+                Write-Verbose -Message "Threshold: $($IniConfig.Website.TotalFailedLogins) < TotalHits: $($totalHits)"
+
                 $returnValue = @{
                                     'FriendlyName'      = $IniConfig.Website.FriendlyName
                                     'TotalFailedLogins' = $totalHits
