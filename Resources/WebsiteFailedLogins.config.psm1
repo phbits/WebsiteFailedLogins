@@ -632,7 +632,7 @@ Function Assert-ValidIniConfig
 
                         if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
                         {
-                            $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $credFile.FullName))
+                            $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
                         }
 
                         try {
