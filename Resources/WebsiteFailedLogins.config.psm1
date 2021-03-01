@@ -386,7 +386,7 @@ Function Assert-ValidIniConfig
 
                             $e = $_
                             $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-                            $returnValue.ErrorMessages += $('[Error][Config][Logparser] {0}' -f $e.Exception.Message)
+                            $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
                         }
                     }
 
@@ -566,7 +566,9 @@ Function Assert-ValidIniConfig
 
                                 } catch {
 
+                                    $e = $_
                                     $returnValue.ErrorMessages += '[Error][Config][SMTP] TCP connection failed to {0}:{1}' -f $IniConfig.Smtp.Server,$IniConfig.Smtp.Port
+                                    $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
                                 }
 
                             } else {
@@ -601,7 +603,9 @@ Function Assert-ValidIniConfig
 
                                 } catch {
 
+                                    $e = $_
                                     $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
+                                    $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
                                 }
                             }
                         }
@@ -640,8 +644,8 @@ Function Assert-ValidIniConfig
                         } catch {
 
                             $e = $_
-                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
                             $returnValue.ErrorMessages += '[Error][Config][SMTP] Send test message failed.'
+                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
                         }
                     }
                 }

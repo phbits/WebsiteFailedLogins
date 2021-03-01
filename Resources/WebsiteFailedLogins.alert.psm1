@@ -131,39 +131,39 @@ Function Send-SmtpAlert
             $TerminatingError
     )
 
-    $emailProperties = @{
-                            'To'          = $IniConfig.Smtp.To
-                            'From'        = $IniConfig.Smtp.From
-                            'Subject'     = $IniConfig.Smtp.Subject
-                            'SmtpServer'  = $IniConfig.Smtp.Server
-                            'Port'        = $IniConfig.Smtp.Port
-                            'Body'        = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
-                            'UseSsl'      = $true
-                            'ErrorAction' = 'Stop'
-                        }
+    $emailSplat = @{
+                        'To'          = $IniConfig.Smtp.To
+                        'From'        = $IniConfig.Smtp.From
+                        'Subject'     = $IniConfig.Smtp.Subject
+                        'SmtpServer'  = $IniConfig.Smtp.Server
+                        'Port'        = $IniConfig.Smtp.Port
+                        'Body'        = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
+                        'UseSsl'      = $true
+                        'ErrorAction' = 'Stop'
+                    }
 
     if ($AlertData.ContainsKey('TotalFailedLogins'))
     {
-        $emailProperties.Subject = '[TotalFailedLogins] {0}' -f $IniConfig.Smtp.Subject
+        $emailSplat.Subject = '[TotalFailedLogins] {0}' -f $IniConfig.Smtp.Subject
     }
 
     if ($AlertData.ContainsKey('ClientIP'))
     {
-        $emailProperties.Subject = '[FailedLoginsPerIP][{0}] {1}' -f $IniConfig.ClientIP,$IniConfig.Smtp.Subject
+        $emailSplat.Subject = '[FailedLoginsPerIP][{0}] {1}' -f $IniConfig.ClientIP,$IniConfig.Smtp.Subject
     }
 
     if ($TerminatingError)
     {
-        $emailProperties.Subject = '[TerminatingError]{0}' -f $emailProperties.Subject
+        $emailSplat.Subject = '[TerminatingError]{0}' -f $emailProperties.Subject
     }
 
     if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
     {
-        $emailProperties.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
+        $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
     }
 
     try {
-            Send-MailMessage @eventProperties
+            Send-MailMessage @emailSplat
 
     } catch {
 
