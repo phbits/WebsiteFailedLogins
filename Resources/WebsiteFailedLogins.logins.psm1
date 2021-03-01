@@ -119,28 +119,16 @@ Function Get-TotalFailedLogins
 
     $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
 
-    Write-Verbose -Message "$($IniConfig.Logparser.ExePath)"
-    Write-Verbose -Message "$($IniConfig.Logparser.TotalFailedLoginsQuery)"
-    Write-Verbose -Message "$($logparserArgs)"
-
     [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
                                                  -Query $IniConfig.Logparser.TotalFailedLoginsQuery `
                                                  -Switches $logparserArgs
 
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
     {
-        Write-Verbose -Message 'Not null.'
-
         if ([System.Int32]::TryParse($logparserResult, [ref] $totalHits))
         {
-            Write-Verbose -Message 'Parse successful.'
-            Write-Verbose -Message "Threshold: $($IniConfig.Website.TotalFailedLogins)"
-            Write-Verbose -Message "TotalHits: $($totalHits)"
-
             if ($totalHits -ge $IniConfig.Website.TotalFailedLogins)
             {
-                Write-Verbose -Message "Threshold: $($IniConfig.Website.TotalFailedLogins) < TotalHits: $($totalHits)"
-
                 $returnValue = @{
                                     'FriendlyName'      = $IniConfig.Website.FriendlyName
                                     'TotalFailedLogins' = $totalHits

@@ -21,6 +21,7 @@ Function Assert-ValidIniConfig
             $RunningConfig
     )
 
+    Write-Verbose -Message 'Validating configuration file settings.'
     $i = 0
 
     $returnValue = @{
@@ -37,6 +38,7 @@ Function Assert-ValidIniConfig
 
         if ($returnValue.ErrorMessages.Count -gt 0)
         {
+            Write-Verbose -Message "Error at #$($i - 1)"
             $i = 1000
         }
 
@@ -964,6 +966,8 @@ Function Get-IniConfig
             # Path to configuration file.
             $Path
     )
+
+    Write-Verbose -Message 'Reading configuration file.'
 
     $config = @{}
 
