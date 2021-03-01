@@ -23,7 +23,8 @@ It leverages Microsoft Logparser and a configuration file to parse the target we
 NestedModules = @(
                     'Resources\WebsiteFailedLogins.alert.psm1',
                     'Resources\WebsiteFailedLogins.config.psm1',
-                    'Resources\WebsiteFailedLogins.logins.psm1'
+                    'Resources\WebsiteFailedLogins.logins.psm1',
+                    'Resources\WebsiteFailedLogins.lp.psm1'
                 )
 
 FunctionsToExport = @(

@@ -259,7 +259,10 @@ Function Assert-ValidIniConfig
                             {
                                 [int] $IniConfig.Website.StartTime = $intSeconds
 
-                                $IniConfig.Website.StartTimeTS = (Get-Date).ToUniversalTime().AddSeconds($($intSeconds * -1)).ToString('yyyy-MM-dd HH:mm:ss')
+                                $startTS = (Get-Date).ToUniversalTime().AddSeconds($($intSeconds * -1))
+
+                                $IniConfig.Website.Add('StartTimeTS', $($startTS.ToString('yyyy-MM-dd HH:mm:ss')))
+                                $IniConfig.Website.Add('StartTimeTSZ', $($startTS.ToString('yyyy-MM-ddTHH:mm:ssZ')))
 
                             } else {
 

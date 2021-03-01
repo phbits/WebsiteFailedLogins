@@ -18,12 +18,10 @@ Function Get-FailedLoginsPerIP
 
     $returnValue = @{}
 
-    $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig
-
     $logparserArgs = @('-recurse:-1','-headers:ON','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
 
     $logparserResults = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                         -Query $logparserQuery `
+                                         -Query $IniConfig.Logparser.FailedLoginsPerIpQuery `
                                          -Switches $logparserArgs
 
     if ([System.String]::IsNullOrEmpty($logparserResults) -eq $false)
@@ -90,7 +88,7 @@ Function Get-FailedLoginsPerIPResult
                 'Authentication' = $IniConfig.Website.Authentication
                 'HttpResponse'   = $IniConfig.Website.HttpResponse
                 'UrlPath'        = $IniConfig.Website.UrlPath
-                'Start'          = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
+                'Start'          = $IniConfig.Website.StartTimeTSZ
                 'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
             }
 
@@ -115,12 +113,10 @@ Function Get-TotalFailedLogins
 
     [Int32] $totalHits = 0
 
-    $logparserQuery = Get-LogparserQuery -IniConfig $IniConfig -TotalFailedLogins
-
     $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
 
     [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                                 -Query $logparserQuery `
+                                                 -Query $IniConfig.Logparser.TotalFailedLoginsQuery `
                                                  -Switches $logparserArgs
 
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
@@ -137,7 +133,7 @@ Function Get-TotalFailedLogins
                                     'Authentication'    = $IniConfig.Website.Authentication
                                     'HttpResponse'      = $IniConfig.Website.HttpResponse
                                     'UrlPath'           = $IniConfig.Website.UrlPath
-                                    'Start'             = "$($IniConfig.Website.StartTimeTS.Replace(' ','T') + 'Z')"
+                                    'Start'             = $IniConfig.Website.StartTimeTSZ
                                     'End~'              = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                                 }
             }

@@ -72,6 +72,10 @@ Function Invoke-WebsiteFailedLogins
     } else {
 
         # Per IP Failed Logins
+        $lpQuery = Get-LogparserQuery -IniConfig $returnValue.Configuration
+
+        $returnValue.Configuration.Logparser.Add('FailedLoginsPerIpQuery',$lpQuery)
+
         $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
 
         if ($returnValue.FailedLoginsPerIP.Count -gt 0)
@@ -85,6 +89,10 @@ Function Invoke-WebsiteFailedLogins
         }
 
         # Total Failed Logins
+        $lpQuery = Get-LogparserQuery -IniConfig $returnValue.Configuration -TotalFailedLogins
+
+        $returnValue.Configuration.Logparser.Add('TotalFailedLoginsQuery',$lpQuery)
+
         $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
 
         if ($returnValue.TotalFailedLogins.Count -gt 0)
