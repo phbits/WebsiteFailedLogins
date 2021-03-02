@@ -50,7 +50,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 32)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 20)
             }
         }
 
@@ -295,25 +295,24 @@ Function Assert-ValidIniConfig
 
                             if ($lp.PSIsContainer)
                             {
-                                $IniConfig.Logparser.ExePath = Join-Path -Path $IniConfig.Logparser.ExePath -ChildPath 'LogParser.exe'
-                            }
+                                $lpExePath = Join-Path -Path $IniConfig.Logparser.ExePath -ChildPath 'LogParser.exe'
 
-                            try {
-
-                                $lpExe = Get-Item -LiteralPath $IniConfig.Logparser.ExePath -ErrorAction Stop
-
-                                if ($lpExe.VersionInfo.FileVersion -ne '2.2.10.0')
+                                if (Test-Path -LiteralPath $lpExePath)
                                 {
-                                    $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpExe.VersionInfo.FileVersion)
+                                    $IniConfig.Logparser.ExePath = Join-Path -Path $IniConfig.Logparser.ExePath -ChildPath 'LogParser.exe'
 
-                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
+                                } else {
+
+                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not valid.'
                                 }
 
-                            } catch {
+                            } elseif ($lp.Name -eq 'Logparser.exe') {
 
-                                $e = $_
-                                $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.exe validation error.'
-                                $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
+                                $IniConfig.Logparser.ExePath = $lp.FullName
+
+                            } else {
+
+                                $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not valid.'
                             }
 
                         } else {
@@ -326,7 +325,29 @@ Function Assert-ValidIniConfig
                         $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not specified.'
                     }
 
-            }       # END validate [Logparser] Path
+                }   # END validate [Logparser] Path
+
+            12 {    # BEGIN validate [Logparser] Exe
+
+                    try {
+
+                        $lpExe = Get-Item -LiteralPath $IniConfig.Logparser.ExePath -ErrorAction Stop
+
+                        if ($lpExe.VersionInfo.FileVersion -ne '2.2.10.0')
+                        {
+                            $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpExe.VersionInfo.FileVersion)
+
+                            $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
+                        }
+
+                    } catch {
+
+                        $e = $_
+                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.exe validation error.'
+                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
+                    }
+
+            }       # END validate [Logparser] Exe
 
             12 {    # BEGIN validate [Logparser] dll
 
@@ -358,15 +379,15 @@ Function Assert-ValidIniConfig
                     if ($IniConfig.Logparser.ContainsKey('ExePath'))
                     {
                         # test launch of logparser
+                        $lpQuery = "`"SELECT FileVersion FROM '{0}'`"" -f $IniConfig.Logparser.ExePath
+
+                        $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
+
                         try {
 
-                            $lpQuery = "`"SELECT FileVersion FROM '{0}'`"" -f $IniConfig.Logparser.ExePath
-
-                            $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
-
                             [string] $lpFileVersion = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                                                       -Query $lpQuery `
-                                                                       -Switches $logparserArgs
+                                                                        -Query $lpQuery `
+                                                                        -Switches $logparserArgs
 
                             if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
                             {
@@ -406,14 +427,9 @@ Function Assert-ValidIniConfig
                             $returnValue.ErrorMessages += '[Error][Alert] Method not valid.'
                         }
 
-                        if ($IniConfig.Alert.Method -eq 'None')
-                        {
-                            $IniConfig.Alert.Method = 'stdout'
-                        }
-
                     } else {
 
-                        $IniConfig.Alert.Method = 'stdout'
+                        $IniConfig.Alert.Method = 'None'
                     }
 
             }       # END validate [Alert] Method
@@ -434,446 +450,43 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] DataType
 
-            16 {    # BEGIN validate [SMTP] To
+            16 {    # BEGIN validate [SMTP]
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
                         if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.To) -eq $false)
+                            $smtpResult = Assert-ValidSmtpSettings -IniConfig $IniConfig `
+                                                                   -Verbose:$($Verbose)
+
+                            if ($smtpResult.HasError -eq $true)
                             {
-                                try {
-
-                                    $null = [System.Net.Mail.MailAddress]::New($IniConfig.Smtp.To)
-
-                                } catch {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] TO not valid.'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][SMTP] TO not specified.'
-                            }
-
-                        } else {
-
-                            # skip rest of SMTP checks
-                            $i = 22
-                        }
-                    }
-
-            }       # END validate [SMTP] To
-
-            17 {    # BEGIN validate [SMTP] From
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'Smtp')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.From) -eq $false)
-                            {
-                                try {
-
-                                    $null = [System.Net.Mail.MailAddress]::new($IniConfig.Smtp.From)
-
-                                } catch {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] FROM not valid.'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][SMTP] FROM not specified.'
+                                $returnValue.ErrorMessages = $smtpResult.ErrorMessages
                             }
                         }
                     }
 
-            }       # END validate [SMTP] From
+            }       # END validate [SMTP]
 
-            18 {    # BEGIN validate [SMTP] Subject
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'Smtp')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Subject))
-                            {
-                                $returnValue.ErrorMessages += '[Error][SMTP] SUBJECT not specified.'
-
-                            } else {
-
-                                try {
-
-                                    $msg = [System.Net.Mail.MailMessage]::new()
-
-                                    $msg.Subject = $IniConfig.Smtp.Subject
-
-                                    $msg.Dispose()
-
-                                    Remove-Variable -Name msg
-
-                                } catch {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] SUBJECT not valid.'
-                                }
-                            }
-                        }
-                    }
-
-            }       # END validate [SMTP] Subject
-
-            19 {    # BEGIN validate [SMTP] Port
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'Smtp')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Port) -eq $false)
-                            {
-                                [Int] $intPort = 0
-
-                                if ([System.Int32]::TryParse($IniConfig.Smtp.Port, [ref] $intPort))
-                                {
-                                    if ($intPort -gt 0)
-                                    {
-                                        [int] $IniConfig.Smtp.Port = $intPort
-
-                                    } else {
-
-                                        $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
-                                    }
-
-                                } else {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT not specified.'
-                            }
-                        }
-                    }
-
-            }       # END validate [SMTP] Port
-
-            20 {    # BEGIN validate [SMTP] Server
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'Smtp')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Server) -eq $false)
-                            {
-                                try {
-
-                                    $smtpServer = New-Object System.Net.Sockets.TcpClient($IniConfig.Smtp.Server, $IniConfig.Smtp.Port)
-
-                                    if ($smtpServer.Connected -eq $false)
-                                    {
-                                        $returnValue.ErrorMessages += '[Error][Config][SMTP] TCP connection failed to {0}:{1}' -f $IniConfig.Smtp.Server,$IniConfig.Smtp.Port
-                                    }
-
-                                    $smtpServer.Dispose()
-
-                                    Remove-Variable -Name smtpServer
-
-                                } catch {
-
-                                    $e = $_
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] TCP connection failed to {0}:{1}' -f $IniConfig.Smtp.Server,$IniConfig.Smtp.Port
-                                    $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][SMTP] SERVER not specified.'
-                            }
-                        }
-                    }
-
-            }       # END validate [SMTP] Server
-
-            21 {    # BEGIN validate [SMTP] CredentialXml
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'Smtp')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
-                            {
-                                try {
-
-	                                $credFile = Get-Item -LiteralPath $IniConfig.Smtp.CredentialXml -ErrorAction Stop
-
-	                                $credCheck = Import-Clixml -LiteralPath $credFile.FullName
-
-                                    if ($credCheck.GetType().Name -ne 'PSCredential')
-                                    {
-		                                $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
-	                                }
-
-	                                Remove-Variable -Name credCheck,credFile
-
-                                } catch {
-
-                                    $e = $_
-                                    $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
-                                    $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
-                                }
-                            }
-                        }
-                    }
-
-            }       # END validate [SMTP] CredentialXml
-
-            22 {    # BEGIN validate [SMTP] Send test alert
-
-                if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                {
-                    if ($IniConfig.Alert.Method -imatch 'Smtp')
-                    {
-                        $emailSplat = @{
-                            'To'          = $IniConfig.Smtp.To
-                            'From'        = $IniConfig.Smtp.From
-                            'Subject'     = $('[TEST] {0}' -f $IniConfig.Smtp.Subject)
-                            'SmtpServer'  = $IniConfig.Smtp.Server
-                            'Port'        = $IniConfig.Smtp.Port
-                            'Body'        = "Test message to validate configuration.`n`nUse '-RunningConfig' switch once all errors have been fixed."
-                            'UseSsl'      = $true
-                            'ErrorAction' = 'Stop'
-                        }
-
-                        if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
-                        {
-                            $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
-                        }
-
-                        try {
-
-                            Send-MailMessage @emailSplat
-
-                            Remove-Variable -Name emailSplat
-
-                        } catch {
-
-                            $e = $_
-                            $returnValue.ErrorMessages += '[Error][Config][SMTP] Send test message failed.'
-                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
-                        }
-                    }
-                }
-
-            }       # END validate [SMTP] Send test alert
-
-            23 {    # BEGIN validate [WinEvent] Logname
+            17 {    # BEGIN validate [WinEvent]
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
                         if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Logname) -eq $false)
+                            $winEventResult = Assert-ValidWinEventSettings -IniConfig $IniConfig `
+                                                                           -Verbose:$($Verbose)
+
+                            if ($winEventResult.HasError -eq $true)
                             {
-                                if ([System.Diagnostics.EventLog]::Exists($IniConfig.WinEvent.Logname) -eq $false)
-                                {
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Logname not valid.'
-                                    $returnValue.ErrorMessages += $('[Error][Config][WinEvent]   {0} does not exist.' -f $IniConfig.WinEvent.Logname)
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] Logname not specified.'
-                            }
-
-                        } else {
-
-                            # skip rest of WinEvent checks
-                            $i = 29
-                        }
-                    }
-
-            }       # END validate [WinEvent] Logname
-
-            24 {    # BEGIN validate [WinEvent] Source
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Source) -eq $false)
-                            {
-                                $result = [System.Diagnostics.EventLog]::SourceExists($IniConfig.WinEvent.Source)
-
-                                if ($result -eq $false)
-                                {
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source does not exist.'
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Run the following command in an elevated prompt:'
-                                    $returnValue.ErrorMessages += $('[Error][Config][WinEvent]    New-EventLog -LogName Application -Source {0}' -f $IniConfig.WinEvent.Source)
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source not specified.'
+                                $returnValue.ErrorMessages = $winEventResult.ErrorMessages
                             }
                         }
                     }
 
-            }       # END validate [WinEvent] Source
+            }       # END validate [WinEvent]
 
-            25 {    # BEGIN validate [WinEvent] EntryType
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.EntryType) -eq $false)
-                            {
-                                if ($IniConfig.WinEvent.EntryType -notmatch "^(?i)(Error|FailureAudit|Information|SuccessAudit|Warning)$")
-                                {
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] EntryType not valid.'
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] Choose one: Error,FailureAudit,Information,SuccessAudit,Warning'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] EntryType not specified.'
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] Choose one: Error,FailureAudit,Information,SuccessAudit,Warning'
-                            }
-                        }
-                    }
-
-            }       # END validate [WinEvent] EntryType
-
-            26 {    # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.FailedLoginsPerIPEventId) -eq $false)
-                            {
-                                [Int] $intFailedLoginsPerIPEventId = 0
-
-                                if ([System.Int32]::TryParse($IniConfig.WinEvent.FailedLoginsPerIPEventId, [ref] $intFailedLoginsPerIPEventId))
-                                {
-                                    if ($intFailedLoginsPerIPEventId -gt 0)
-                                    {
-                                        if ($intFailedLoginsPerIPEventId -eq 100 -or $intFailedLoginsPerIPEventId -eq 200)
-                                        {
-                                            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] FailedLoginsPerIPEventId can not be {0}.' -f $intFailedLoginsPerIPEventId)
-
-                                        } else {
-
-                                            [int] $IniConfig.WinEvent.FailedLoginsPerIPEventId = $intFailedLoginsPerIPEventId
-                                        }
-
-                                    } else {
-
-                                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId must be a positive number.'
-                                    }
-
-                                } else {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId must be a positive number.'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId not specified.'
-                            }
-                        }
-                    }
-
-            }       # END validate [WinEvent] FailedLoginsPerIPEventId
-
-            27 {    # BEGIN validate [WinEvent] TotalFailedLoginsEventId
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.TotalFailedLoginsEventId) -eq $false)
-                            {
-                                [Int] $intTotalFailedLoginsEventId = 0
-
-                                if ([System.Int32]::TryParse($IniConfig.WinEvent.TotalFailedLoginsEventId, [ref] $intTotalFailedLoginsEventId))
-                                {
-                                    if ($intTotalFailedLoginsEventId -gt 0)
-                                    {
-                                        if ($intTotalFailedLoginsEventId -eq 100 -or $intTotalFailedLoginsEventId -eq 200)
-                                        {
-                                            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] TotalFailedLoginsEventId can not be {0}.' -f $intTotalFailedLoginsEventId)
-
-                                        } else {
-
-                                            [int] $IniConfig.WinEvent.TotalFailedLoginsEventId = $intTotalFailedLoginsEventId
-                                        }
-
-                                    } else {
-
-                                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId must be a positive number.'
-                                    }
-
-                                } else {
-
-                                    $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId must be a positive number.'
-                                }
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId not specified.'
-                            }
-                        }
-                    }
-
-            }       # END validate [WinEvent] TotalFailedLoginsEventId
-
-            28 {    # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            if ($IniConfig.WinEvent.TotalFailedLoginsEventId -eq $IniConfig.WinEvent.FailedLoginsPerIPEventId)
-                            {
-                                $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId and FailedLoginsPerIPEventId must be different.'
-                            }
-                        }
-                    }
-
-            }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
-
-
-
-            29 {    # BEGIN validate [WinEvent] Write Start
-
-                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
-                    {
-                        if ($IniConfig.Alert.Method -imatch 'WinEvent')
-                        {
-                            try {
-
-                                Write-EventLog -LogName $IniConfig.WinEvent.Logname `
-                                               -Source $IniConfig.WinEvent.Source `
-                                               -EntryType $IniConfig.WinEvent.EntryType `
-                                               -EventId 100 `
-                                               -ErrorAction Stop `
-                                               -Message 'Write-EventLog success.'
-
-                            } catch {
-
-                                $e = $_
-
-                                $returnValue.ErrorMessages += '[Error][Config][Script] Event log write failed.'
-                                $returnValue.ErrorMessages += $('[Error][Config][Script] Exception: {0}' -f $e.Exception.Message)
-                            }
-                        }
-                    }
-
-            }       # END validate [WinEvent] Write Start
-
-            30 {    # BEGIN validate IIS Log Access & verify logging fields
+            18 {    # BEGIN validate IIS Log Access & verify logging fields
 
                 $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' " + `
                            "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
@@ -958,6 +571,495 @@ Function Assert-ValidIniConfig
     return $returnValue
 
 } # End Function Assert-ValidIniConfig
+
+Function Assert-ValidWinEventSettings
+{
+    <#
+        .SYNOPSIS
+
+            Validates WinEvent settings in the configuration file.
+    #>
+    [CmdletBinding()]
+    [OutputType('System.Collections.Hashtable')]
+    param(
+            [Parameter(Mandatory=$true)]
+            [System.Collections.Hashtable]
+            # INI Configuration.
+            $IniConfig
+    )
+
+    Write-Verbose -Message 'Validating WinEvent configuration file settings.'
+
+    $n = 0
+
+    $returnValue = @{
+                        'ErrorMessages' = @()
+                        'HasError'      = $false
+                        'Configuration' = @{}
+                    }
+
+    do {
+
+        $n++
+
+        if ($returnValue.ErrorMessages.Count -gt 0)
+        {
+            $n = 100
+        }
+
+        switch ($n)
+        {
+            1 {     # BEGIN validate [WinEvent] Logname
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Logname) -eq $false)
+                    {
+                        if ([System.Diagnostics.EventLog]::Exists($IniConfig.WinEvent.Logname) -eq $false)
+                        {
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] Logname not valid.'
+                            $returnValue.ErrorMessages += $('[Error][Config][WinEvent]   {0} does not exist.' -f $IniConfig.WinEvent.Logname)
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] Logname not specified.'
+                    }
+
+            }       # END validate [WinEvent] Logname
+
+            2 {     # BEGIN validate [WinEvent] Source
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.Source) -eq $false)
+                    {
+                        $result = [System.Diagnostics.EventLog]::SourceExists($IniConfig.WinEvent.Source)
+
+                        if ($result -eq $false)
+                        {
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source does not exist.'
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] Run the following command in an elevated prompt:'
+                            $returnValue.ErrorMessages += $('[Error][Config][WinEvent]    New-EventLog -LogName Application -Source {0}' -f $IniConfig.WinEvent.Source)
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] Source not specified.'
+                    }
+
+            }       # END validate [WinEvent] Source
+
+            3 {     # BEGIN validate [WinEvent] EntryType
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.EntryType) -eq $false)
+                    {
+                        if ($IniConfig.WinEvent.EntryType -notmatch "^(?i)(Error|FailureAudit|Information|SuccessAudit|Warning)$")
+                        {
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] EntryType not valid.'
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] Choose one: Error,FailureAudit,Information,SuccessAudit,Warning'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] EntryType not specified.'
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] Choose one: Error,FailureAudit,Information,SuccessAudit,Warning'
+                    }
+
+            }       # END validate [WinEvent] EntryType
+
+            4 {     # BEGIN validate [WinEvent] FailedLoginsPerIPEventId
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.FailedLoginsPerIPEventId) -eq $false)
+                    {
+                        [Int] $intFailedLoginsPerIPEventId = 0
+
+                        if ([System.Int32]::TryParse($IniConfig.WinEvent.FailedLoginsPerIPEventId, [ref] $intFailedLoginsPerIPEventId))
+                        {
+                            $winEventIdResult = Assert-WinEventId -EventName 'FailedLoginsPerIPEventId' `
+                                                                -EventId $intFailedLoginsPerIPEventId
+
+                            if ($winEventIdResult.HasError -eq $true)
+                            {
+                                $returnValue.ErrorMessages = $winEventIdResult.ErrorMessages
+                            }
+
+                        } else {
+
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] FailedLoginsPerIPEventId not specified.'
+                    }
+
+            }       # END validate [WinEvent] FailedLoginsPerIPEventId
+
+            5 {     # BEGIN validate [WinEvent] TotalFailedLoginsEventId
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.WinEvent.TotalFailedLoginsEventId) -eq $false)
+                    {
+                        [Int] $intTotalFailedLoginsEventId = 0
+
+                        if ([System.Int32]::TryParse($IniConfig.WinEvent.TotalFailedLoginsEventId, [ref] $intTotalFailedLoginsEventId))
+                        {
+                            $winEventIdResult = Assert-WinEventId -EventName 'TotalFailedLoginsEventId' `
+                                                                -EventId $intTotalFailedLoginsEventId
+
+                            if ($winEventIdResult.HasError -eq $true)
+                            {
+                                $returnValue.ErrorMessages = $winEventIdResult.ErrorMessages
+                            }
+
+                        } else {
+
+                            $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId not specified.'
+                    }
+
+            }       # END validate [WinEvent] TotalFailedLoginsEventId
+
+            6 {     # BEGIN validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
+
+                    if ($IniConfig.WinEvent.TotalFailedLoginsEventId -eq $IniConfig.WinEvent.FailedLoginsPerIPEventId)
+                    {
+                        $returnValue.ErrorMessages += '[Error][Config][WinEvent] TotalFailedLoginsEventId and FailedLoginsPerIPEventId must be different.'
+                    }
+
+            }       # END validate [WinEvent] Unique TotalFailedLoginsEventId & FailedLoginsPerIPEventId
+
+            7 {     # BEGIN validate [WinEvent] Write Start
+
+                    try {
+
+                        Write-EventLog -LogName $IniConfig.WinEvent.Logname `
+                                        -Source $IniConfig.WinEvent.Source `
+                                        -EntryType $IniConfig.WinEvent.EntryType `
+                                        -EventId 100 `
+                                        -ErrorAction Stop `
+                                        -Message 'Write-EventLog success.'
+
+                    } catch {
+
+                        $e = $_
+
+                        $returnValue.ErrorMessages += '[Error][Config][Script] Event log write failed.'
+                        $returnValue.ErrorMessages += $('[Error][Config][Script] Exception: {0}' -f $e.Exception.Message)
+                    }
+
+            }       # END validate [WinEvent] Write Start
+
+            default {
+
+                    if ($returnValue.ErrorMessages.Count -gt 0)
+                    {
+                        $returnValue.HasError = $true
+                    }
+
+                    $n = 0
+            }
+        }
+
+    } while ($n -gt 0)
+
+    return $returnValue
+
+} # End Function Assert-ValidWinEventSettings
+
+Function Assert-WinEventId
+{
+    <#
+        .SYNOPSIS
+
+            Validates WinEvent Event IDs
+    #>
+    [CmdletBinding()]
+    [OutputType('System.Collections.Hashtable')]
+    param(
+            [Parameter(Mandatory=$true)]
+            [String]
+            # Event Name
+            $EventName
+            ,
+            [Parameter(Mandatory=$true)]
+            [Int]
+            # Event ID
+            $EventId
+    )
+
+    $returnValue = @{
+                        'ErrorMessages' = @()
+                        'HasError'      = $false
+                    }
+
+    switch ($EventId)
+    {
+        0 {
+            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} cannot be zero.' -f $EventName)
+        }
+        100 {
+            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} can not be {1}.' -f $EventName,$EventId)
+        }
+        200 {
+            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} can not be {1}.' -f $EventName,$EventId)
+        }
+        default {
+
+            if ($EventId -lt 0 -or $EventId -gt 999)
+            {
+                $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} not valid.' -f $EventName)
+            }
+        }
+    }
+
+    if ($returnValue.ErrorMessages.Count -gt 0)
+    {
+        $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} must be between 1-999.' -f $EventName)
+        $returnValue.HasError = $true
+    }
+
+    return $returnValue
+
+} # End Function Assert-WinEventId
+
+Function Assert-ValidSmtpSettings
+{
+    <#
+        .SYNOPSIS
+
+            Validates SMTP settings in the configuration file.
+    #>
+    [CmdletBinding()]
+    [OutputType('System.Collections.Hashtable')]
+    param(
+            [Parameter(Mandatory=$true)]
+            [System.Collections.Hashtable]
+            # INI Configuration.
+            $IniConfig
+    )
+
+    Write-Verbose -Message 'Validating SMTP configuration file settings.'
+
+    $n = 0
+
+    $returnValue = @{
+                        'ErrorMessages' = @()
+                        'HasError'      = $false
+                        'Configuration' = @{}
+                    }
+
+    do {
+
+        $n++
+
+        if ($returnValue.ErrorMessages.Count -gt 0)
+        {
+            $n = 100
+        }
+
+        switch ($n)
+        {
+            1 {    # BEGIN validate [SMTP] To
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.To) -eq $false)
+                    {
+                        try {
+
+                            $null = [System.Net.Mail.MailAddress]::New($IniConfig.Smtp.To)
+
+                        } catch {
+
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] TO not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][SMTP] TO not specified.'
+                    }
+
+            }       # END validate [SMTP] To
+
+            2 {     # BEGIN validate [SMTP] From
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.From) -eq $false)
+                    {
+                        try {
+
+                            $null = [System.Net.Mail.MailAddress]::new($IniConfig.Smtp.From)
+
+                        } catch {
+
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] FROM not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][SMTP] FROM not specified.'
+                    }
+
+            }       # END validate [SMTP] From
+
+            3 {     # BEGIN validate [SMTP] Subject
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Subject))
+                    {
+                        $returnValue.ErrorMessages += '[Error][SMTP] SUBJECT not specified.'
+
+                    } else {
+
+                        try {
+
+                            $msg = [System.Net.Mail.MailMessage]::new()
+
+                            $msg.Subject = $IniConfig.Smtp.Subject
+
+                            $msg.Dispose()
+
+                            Remove-Variable -Name msg
+
+                        } catch {
+
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] SUBJECT not valid.'
+                        }
+                    }
+
+            }       # END validate [SMTP] Subject
+
+            4 {     # BEGIN validate [SMTP] Port
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Port) -eq $false)
+                    {
+                        [Int] $intPort = 0
+
+                        if ([System.Int32]::TryParse($IniConfig.Smtp.Port, [ref] $intPort))
+                        {
+                            if ($intPort -gt 0)
+                            {
+                                [int] $IniConfig.Smtp.Port = $intPort
+
+                            } else {
+
+                                $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
+                            }
+
+                        } else {
+
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT not specified.'
+                    }
+
+            }       # END validate [SMTP] Port
+
+            5 {     # BEGIN validate [SMTP] Server
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.Server) -eq $false)
+                    {
+                        try {
+
+                            $smtpServer = New-Object System.Net.Sockets.TcpClient($IniConfig.Smtp.Server, $IniConfig.Smtp.Port)
+
+                            if ($smtpServer.Connected -eq $false)
+                            {
+                                $returnValue.ErrorMessages += '[Error][Config][SMTP] TCP connection failed to {0}:{1}' -f $IniConfig.Smtp.Server,$IniConfig.Smtp.Port
+                            }
+
+                            $smtpServer.Dispose()
+
+                            Remove-Variable -Name smtpServer
+
+                        } catch {
+
+                            $e = $_
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] TCP connection failed to {0}:{1}' -f $IniConfig.Smtp.Server,$IniConfig.Smtp.Port
+                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Config][SMTP] SERVER not specified.'
+                    }
+
+            }       # END validate [SMTP] Server
+
+            6 {     # BEGIN validate [SMTP] CredentialXml
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
+                    {
+                        try {
+
+                            $credCheck = Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml -ErrorAction Stop
+
+                            if ($credCheck.GetType().Name -ne 'PSCredential')
+                            {
+                                $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
+                            }
+
+                            Remove-Variable -Name credCheck,credFile
+
+                        } catch {
+
+                            $e = $_
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
+                            $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
+                        }
+                    }
+
+            }       # END validate [SMTP] CredentialXml
+
+            7 {     # BEGIN validate [SMTP] Send test alert
+
+                    $emailSplat = @{
+                        'To'          = $IniConfig.Smtp.To
+                        'From'        = $IniConfig.Smtp.From
+                        'Subject'     = $('[TEST] {0}' -f $IniConfig.Smtp.Subject)
+                        'SmtpServer'  = $IniConfig.Smtp.Server
+                        'Port'        = $IniConfig.Smtp.Port
+                        'Body'        = "Test message to validate configuration.`n`nUse '-RunningConfig' switch once all errors have been fixed."
+                        'UseSsl'      = $true
+                        'ErrorAction' = 'Stop'
+                    }
+
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
+                    {
+                        $emailSplat.Add('Credential', $(Import-Clixml -LiteralPath $IniConfig.Smtp.CredentialXml))
+                    }
+
+                    try {
+
+                        Send-MailMessage @emailSplat | Out-Null
+
+                        Remove-Variable -Name emailSplat
+
+                    } catch {
+
+                        $e = $_
+                        $returnValue.ErrorMessages += '[Error][Config][SMTP] Send test message failed.'
+                        $returnValue.ErrorMessages += $('[Error][Config][SMTP] Exception: {0}' -f $e.Exception.Message)
+                    }
+
+            }       # END validate [SMTP] Send test alert
+
+            default {
+
+                if ($returnValue.ErrorMessages.Count -gt 0)
+                {
+                    $returnValue.HasError = $true
+                }
+
+                $n = 0
+            }
+        }
+
+    } while ($n -gt 0)
+
+    return $returnValue
+
+} # End Function Assert-ValidSmtpSettings
 
 Function Get-IniConfig
 {
