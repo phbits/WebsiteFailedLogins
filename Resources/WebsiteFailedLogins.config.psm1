@@ -454,8 +454,7 @@ Function Assert-ValidIniConfig
                     {
                         if ($IniConfig.Alert.Method -imatch 'Smtp')
                         {
-                            $smtpResult = Assert-ValidSmtpSettings -IniConfig $IniConfig `
-                                                                   -Verbose:$($Verbose)
+                            $smtpResult = Assert-ValidSmtpSettings -IniConfig $IniConfig
 
                             if ($smtpResult.HasError -eq $true)
                             {
@@ -472,8 +471,7 @@ Function Assert-ValidIniConfig
                     {
                         if ($IniConfig.Alert.Method -imatch 'WinEvent')
                         {
-                            $winEventResult = Assert-ValidWinEventSettings -IniConfig $IniConfig `
-                                                                           -Verbose:$($Verbose)
+                            $winEventResult = Assert-ValidWinEventSettings -IniConfig $IniConfig
 
                             if ($winEventResult.HasError -eq $true)
                             {
@@ -487,8 +485,8 @@ Function Assert-ValidIniConfig
             19 {    # BEGIN validate IIS Log Access & verify logging fields
 
                     $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' " + `
-                            "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
-                            "ORDER BY date, time DESC`""
+                               "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
+                               "ORDER BY date, time DESC`""
 
                     $logparserArgs = @('-recurse:-1','-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
