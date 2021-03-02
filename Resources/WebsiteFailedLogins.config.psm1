@@ -30,7 +30,7 @@ Function Assert-ValidIniConfig
                         'Configuration' = @{}
                     }
 
-    [int[]] $minimumChecks = 1,7,8,9,10,11,16,19,23,26,27,28
+    [int[]] $minimumChecks = 1,7,10,11
 
     do {
 
@@ -199,12 +199,8 @@ Function Assert-ValidIniConfig
 
                         if ([System.Int32]::TryParse($IniConfig.Website.FailedLoginsPerIP, [ref] $intPerIP))
                         {
-                            if ($intPerIP -gt 0)
+                            if ($intPerIP -le 0)
                             {
-                                $IniConfig.Website.FailedLoginsPerIP = $intPerIP
-
-                            } else {
-
                                 $returnValue.ErrorMessages += '[Error][Config][Website] FailedLoginsPerIP must be a positive number.'
                             }
 
@@ -228,12 +224,8 @@ Function Assert-ValidIniConfig
 
                         if ([System.Int32]::TryParse($IniConfig.Website.TotalFailedLogins, [ref] $intTotal))
                         {
-                            if ($intTotal -gt 0)
+                            if ($intTotal -le 0)
                             {
-                                [int] $IniConfig.Website.TotalFailedLogins = $intTotal
-
-                            } else {
-
                                 $returnValue.ErrorMessages += '[Error][Config][Website] TotalFailedLogins must be a positive number.'
                             }
 
@@ -325,15 +317,19 @@ Function Assert-ValidIniConfig
                         $returnValue.ErrorMessages += '[Error][Config][Logparser] Path not specified.'
                     }
 
-                }   # END validate [Logparser] Path
+            }       # END validate [Logparser] Path
 
             12 {    # BEGIN validate [Logparser] Exe
 
                     try {
 
+                        $minVer = [System.Version]::Parse('2.2.10.0')
+
                         $lpExe = Get-Item -LiteralPath $IniConfig.Logparser.ExePath -ErrorAction Stop
 
-                        if ($lpExe.VersionInfo.FileVersion -ne '2.2.10.0')
+                        $lpVer = [System.Version]::Parse($lpExe.VersionInfo.FileVersion)
+
+                        if ($minVer -lt $lpVer)
                         {
                             $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpExe.VersionInfo.FileVersion)
 
@@ -351,69 +347,71 @@ Function Assert-ValidIniConfig
 
             12 {    # BEGIN validate [Logparser] dll
 
-                $lp = Get-Item -LiteralPath $IniConfig.Logparser.ExePath
+                    $minVer = [System.Version]::Parse('2.2.10.0')
 
-                $lpDllPath = Join-Path -Path $lp.Directory -ChildPath 'logparser.dll'
+                    $lp = Get-Item -LiteralPath $IniConfig.Logparser.ExePath
 
-                try {
+                    $lpDllPath = Join-Path -Path $lp.Directory -ChildPath 'logparser.dll'
 
-                    $lpDll = Get-Item -LiteralPath $lpDllPath
+                    try {
 
-                    if ($lpDll.VersionInfo.FileVersion -ne '2.2.10.0')
-                    {
-                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser DLL Version {0}' -f $lpDll.VersionInfo.FileVersion)
-                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser DLL Version 2.2.10'
+                        $lpDll = Get-Item -LiteralPath $lpDllPath
+
+                        $lpVer = [System.Version]::Parse($lpExe.VersionInfo.FileVersion)
+
+                        if ($lpVer -lt $minVer)
+                        {
+                            $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser DLL Version {0}' -f $lpDll.VersionInfo.FileVersion)
+                            $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser DLL Version 2.2.10'
+                        }
+
+                    } catch {
+
+                        $e = $_
+                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.dll validation error.'
+                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
                     }
-
-                } catch {
-
-                    $e = $_
-                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Logparser.dll validation error.'
-                    $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
-                }
 
             }       # END validate [Logparser] dll
 
             13 {    # BEGIN validate [Logparser] run test query
 
-                    if ($IniConfig.Logparser.ContainsKey('ExePath'))
-                    {
-                        # test launch of logparser
-                        $lpQuery = "`"SELECT FileVersion FROM '{0}'`"" -f $IniConfig.Logparser.ExePath
+                    $minVer = [System.Version]::Parse('2.2.10.0')
 
-                        $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV')
+                    $lpQuery = "`"SELECT FileVersion FROM '{0}'`"" -f $IniConfig.Logparser.ExePath
 
-                        try {
+                    $logparserArgs = @('-e:-1','-iw:ON','-headers:OFF','-q:ON','-i:FS','-o:CSV','-preserveLastAccTime:ON')
 
-                            [string] $lpFileVersion = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                                                        -Query $lpQuery `
-                                                                        -Switches $logparserArgs
+                    try {
 
-                            if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
+                        [string] $lpFileVersion = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                                    -Query $lpQuery `
+                                                                    -Switches $logparserArgs
+
+                        if ([System.String]::IsNullOrEmpty($lpFileVersion) -eq $false)
+                        {
+                            if ($lpFileVersion.Trim() -eq 'Task aborted.')
                             {
-                                if ($lpFileVersion.Trim() -eq 'Task aborted.')
-                                {
-                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Task aborted.'
-
-                                } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
-
-                                    $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpFileVersion)
-                                    $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10'
-                                }
-
-                            } else {
-
                                 $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-                                $returnValue.ErrorMessages += '[Error][Config][Logparser] No value returned.'
+                                $returnValue.ErrorMessages += '[Error][Config][Logparser] Task aborted.'
+
+                            } elseif ($lpFileVersion.Trim().StartsWith('2.2.10') -eq $false) {
+
+                                $returnValue.ErrorMessages += $('[Error][Config][Logparser] Current Microsoft (R) Log Parser Version {0}' -f $lpFileVersion)
+                                $returnValue.ErrorMessages += '[Error][Config][Logparser] Must be Microsoft (R) Log Parser Version 2.2.10 or newer.'
                             }
 
-                        } catch {
+                        } else {
 
-                            $e = $_
                             $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
-                            $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
+                            $returnValue.ErrorMessages += '[Error][Config][Logparser] No value returned.'
                         }
+
+                    } catch {
+
+                        $e = $_
+                        $returnValue.ErrorMessages += '[Error][Config][Logparser] Error testing launch of Logparser.exe'
+                        $returnValue.ErrorMessages += $('[Error][Config][Logparser] Exception: {0}' -f $e.Exception.Message)
                     }
 
             }       # END validate [Logparser] run test query
@@ -436,17 +434,17 @@ Function Assert-ValidIniConfig
 
             15 {    # BEGIN validate [Alert] DataType
 
-                if ([System.String]::IsNullOrEmpty($IniConfig.Alert.DataType) -eq $false)
-                {
-                    if ($IniConfig.Alert.DataType -notmatch "^(?i)(text|xml|json)$")
+                    if ([System.String]::IsNullOrEmpty($IniConfig.Alert.DataType) -eq $false)
                     {
-                        $returnValue.ErrorMessages += '[Error][Alert] DataType not valid.'
+                        if ($IniConfig.Alert.DataType -notmatch "^(?i)(text|xml|json)$")
+                        {
+                            $returnValue.ErrorMessages += '[Error][Alert] DataType not valid.'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += '[Error][Alert] DataType not specified.'
                     }
-
-                } else {
-
-                    $returnValue.ErrorMessages += '[Error][Alert] DataType not specified.'
-                }
 
             }       # END validate [Alert] DataType
 
