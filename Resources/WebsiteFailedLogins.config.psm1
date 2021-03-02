@@ -50,7 +50,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 18)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 19)
             }
         }
 
@@ -345,7 +345,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Logparser] Exe
 
-            12 {    # BEGIN validate [Logparser] dll
+            13 {    # BEGIN validate [Logparser] dll
 
                     $minVer = [System.Version]::Parse('2.2.10.0')
 
@@ -374,7 +374,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Logparser] dll
 
-            13 {    # BEGIN validate [Logparser] run test query
+            14 {    # BEGIN validate [Logparser] run test query
 
                     $minVer = [System.Version]::Parse('2.2.10.0')
 
@@ -416,7 +416,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Logparser] run test query
 
-            14 {    # BEGIN validate [Alert] Method
+            15 {    # BEGIN validate [Alert] Method
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -432,7 +432,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] Method
 
-            15 {    # BEGIN validate [Alert] DataType
+            16 {    # BEGIN validate [Alert] DataType
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.DataType) -eq $false)
                     {
@@ -448,7 +448,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [Alert] DataType
 
-            16 {    # BEGIN validate [SMTP]
+            17 {    # BEGIN validate [SMTP]
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -466,7 +466,7 @@ Function Assert-ValidIniConfig
 
             }       # END validate [SMTP]
 
-            17 {    # BEGIN validate [WinEvent]
+            18 {    # BEGIN validate [WinEvent]
 
                     if ([System.String]::IsNullOrEmpty($IniConfig.Alert.Method) -eq $false)
                     {
@@ -484,66 +484,66 @@ Function Assert-ValidIniConfig
 
             }       # END validate [WinEvent]
 
-            18 {    # BEGIN validate IIS Log Access & verify logging fields
+            19 {    # BEGIN validate IIS Log Access & verify logging fields
 
-                $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' " + `
-                           "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
-                           "ORDER BY date, time DESC`""
+                    $lpQuery = "`"SELECT TOP 1 * FROM '$($IniConfig.Logparser.LogPath)' " + `
+                            "WHERE s-sitename LIKE '$($IniConfig.Website.Sitename)' " + `
+                            "ORDER BY date, time DESC`""
 
-                $logparserArgs = @('-recurse:-1','-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
+                    $logparserArgs = @('-recurse:-1','-headers:ON','-iw:ON','-q:ON','-i:IISW3C','-o:CSV')
 
-                $fullLpCmd = "$($IniConfig.Logparser.ExePath) $($logparserArgs -join ' ') $($lpQuery)"
+                    $fullLpCmd = "$($IniConfig.Logparser.ExePath) $($logparserArgs -join ' ') $($lpQuery)"
 
-                $lpError = @(
-                                '[Error][Config][Script] Full Logparser command:',
-                                $('[Error][Config][Script]   {0}' -f $fullLpCmd)
-                            )
+                    $lpError = @(
+                                    '[Error][Config][Script] Full Logparser command:',
+                                    $('[Error][Config][Script]   {0}' -f $fullLpCmd)
+                                )
 
-                $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
-                                             -Query $lpQuery `
-                                             -Switches $logparserArgs
+                    $lpOutput = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                -Query $lpQuery `
+                                                -Switches $logparserArgs
 
-                if ([System.String]::IsNullOrEmpty($lpOutput) -eq $false)
-                {
-                    $lpOutputCsv = $lpOutput | ConvertFrom-Csv
-
-                    # validate IIS logging field
-                    $iisLogFields = @( 'date','time','c-ip','s-sitename','cs-method','cs-uri-stem','sc-status' )
-
-                    $iisLogFieldError = $false
-
-                    foreach ($logField in $iisLogFields)
+                    if ([System.String]::IsNullOrEmpty($lpOutput) -eq $false)
                     {
-                        # check if field exists
-                        if ($null -eq $(Get-Member -InputObject $lpOutputCsv -Name $logField -MemberType NoteProperty))
+                        $lpOutputCsv = $lpOutput | ConvertFrom-Csv
+
+                        # validate IIS logging field
+                        $iisLogFields = @( 'date','time','c-ip','s-sitename','cs-method','cs-uri-stem','sc-status' )
+
+                        $iisLogFieldError = $false
+
+                        foreach ($logField in $iisLogFields)
                         {
-                            $iisLogFieldError = $true
-                            $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
-
-                        } else {
-
-                            # is a value being logged
-                            $propertyValue = $lpOutputCsv | Select-Object -ExpandProperty $logField
-
-                            if ([System.String]::IsNullOrEmpty($propertyValue) -eq $true)
+                            # check if field exists
+                            if ($null -eq $(Get-Member -InputObject $lpOutputCsv -Name $logField -MemberType NoteProperty))
                             {
                                 $iisLogFieldError = $true
                                 $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
+
+                            } else {
+
+                                # is a value being logged
+                                $propertyValue = $lpOutputCsv | Select-Object -ExpandProperty $logField
+
+                                if ([System.String]::IsNullOrEmpty($propertyValue) -eq $true)
+                                {
+                                    $iisLogFieldError = $true
+                                    $returnValue.ErrorMessages += "[Error][Config][Script] IIS log field '$logField' not being logged."
+                                }
                             }
                         }
+
+                        if ($iisLogFieldError -eq $true)
+                        {
+                            $returnValue.ErrorMessages = $lpError + $returnValue.ErrorMessages
+                            $returnValue.ErrorMessages += '[Error][Config][Script] https://github.com/phbits/WebsiteFailedLogins/wiki/Prerequisites'
+                        }
+
+                    } else {
+
+                        $returnValue.ErrorMessages += $lpError
+                        $returnValue.ErrorMessages += '[Error][Config][Script] Failed to get an IIS log record.'
                     }
-
-                    if ($iisLogFieldError -eq $true)
-                    {
-                        $returnValue.ErrorMessages = $lpError + $returnValue.ErrorMessages
-                        $returnValue.ErrorMessages += '[Error][Config][Script] https://github.com/phbits/WebsiteFailedLogins/wiki/Prerequisites'
-                    }
-
-                } else {
-
-                    $returnValue.ErrorMessages += $lpError
-                    $returnValue.ErrorMessages += '[Error][Config][Script] Failed to get an IIS log record.'
-                }
 
             }       # END validate IIS Log Access & verify logging fields
 
