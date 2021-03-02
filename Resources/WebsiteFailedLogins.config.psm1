@@ -997,7 +997,7 @@ Function Assert-ValidSmtpSettings
                                 $returnValue.ErrorMessages += '[Error][Config][SMTP] CredentialXml import failed.'
                             }
 
-                            Remove-Variable -Name credCheck,credFile
+                            Remove-Variable -Name credCheck
 
                         } catch {
 
