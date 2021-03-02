@@ -52,9 +52,9 @@ Function Invoke-WebsiteFailedLogins
                         'ErrorMessages'     = @()
                     }
 
-    $iniConfig = Get-IniConfig -Path $Configuration -Verbose:$($Verbose)
+    $iniConfig = Get-IniConfig -Path $Configuration #-Verbose:$($Verbose)
 
-    $configTestResult = Assert-ValidIniConfig -IniConfig $iniConfig -RunningConfig:$($RunningConfig) -Verbose:$($Verbose)
+    $configTestResult = Assert-ValidIniConfig -IniConfig $iniConfig -RunningConfig:$($RunningConfig) #-Verbose:$($Verbose)
 
     $returnValue.Configuration = $configTestResult.Configuration
 
@@ -67,16 +67,16 @@ Function Invoke-WebsiteFailedLogins
         $alertData.Remove('FailedLoginsPerIP')
         $alertData.Remove('TotalFailedLogins')
 
-        Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError -Verbose:$($Verbose)
+        Submit-Alert -IniConfig $returnValue.Configuration -AlertData $alertData -TerminatingError #-Verbose:$($Verbose)
 
     } else {
 
         # Per IP Failed Logins
-        $lpQuery = Get-LogparserQuery -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
+        $lpQuery = Get-LogparserQuery -IniConfig $returnValue.Configuration #-Verbose:$($Verbose)
 
         $returnValue.Configuration.Logparser.Add('FailedLoginsPerIpQuery',$lpQuery)
 
-        $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
+        $returnValue.FailedLoginsPerIP = Get-FailedLoginsPerIP -IniConfig $returnValue.Configuration #-Verbose:$($Verbose)
 
         if ($returnValue.FailedLoginsPerIP.Count -gt 0)
         {
@@ -97,7 +97,7 @@ Function Invoke-WebsiteFailedLogins
 
         $returnValue.Configuration.Logparser.Add('TotalFailedLoginsQuery',$lpQuery)
 
-        $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration -Verbose:$($Verbose)
+        $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration #-Verbose:$($Verbose)
 
         if ($returnValue.TotalFailedLogins.Count -gt 0)
         {
