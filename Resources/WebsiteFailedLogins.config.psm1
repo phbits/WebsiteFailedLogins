@@ -605,6 +605,8 @@ Function Assert-ValidWinEventSettings
             $n = 100
         }
 
+        Write-Verbose -Message "[Assert-ValidWinEventSettings] Check #$($n)"
+
         switch ($n)
         {
             1 {     # BEGIN validate [WinEvent] Logname
@@ -797,10 +799,10 @@ Function Assert-WinEventId
             $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} cannot be zero.' -f $EventName)
         }
         100 {
-            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} can not be {1}.' -f $EventName,$EventId)
+            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} cannot be {1}.' -f $EventName,$EventId)
         }
         200 {
-            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} can not be {1}.' -f $EventName,$EventId)
+            $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} cannot be {1}.' -f $EventName,$EventId)
         }
         default {
 
@@ -855,6 +857,8 @@ Function Assert-ValidSmtpSettings
         {
             $n = 100
         }
+
+        Write-Verbose -Message "[Assert-ValidSmtpSettings] Check #$($n)"
 
         switch ($n)
         {
