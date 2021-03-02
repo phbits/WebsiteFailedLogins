@@ -21,7 +21,7 @@ Function Assert-ValidIniConfig
             $RunningConfig
     )
 
-    Write-Verbose -Message 'Validating configuration file settings.'
+    Write-Verbose -Message '[Assert-ValidIniConfig] Validating configuration file settings.'
     $i = 0
 
     $returnValue = @{
@@ -38,7 +38,7 @@ Function Assert-ValidIniConfig
 
         if ($returnValue.ErrorMessages.Count -gt 0)
         {
-            Write-Verbose -Message "Error at #$($i - 1)"
+            Write-Verbose -Message "[Assert-ValidIniConfig] Error at #$($i - 1)"
             $i = 1000
         }
 
@@ -50,7 +50,7 @@ Function Assert-ValidIniConfig
 
                     $i++
 
-                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 20)
+                } until($minimumChecks.Contains($i) -eq $true -or $i -gt 18)
             }
         }
 
@@ -586,7 +586,7 @@ Function Assert-ValidWinEventSettings
             $IniConfig
     )
 
-    Write-Verbose -Message 'Validating WinEvent configuration file settings.'
+    Write-Verbose -Message '[Assert-ValidWinEventSettings] Validating WinEvent configuration file settings.'
 
     $n = 0
 
@@ -837,7 +837,7 @@ Function Assert-ValidSmtpSettings
             $IniConfig
     )
 
-    Write-Verbose -Message 'Validating SMTP configuration file settings.'
+    Write-Verbose -Message '[Assert-ValidSmtpSettings] Validating SMTP configuration file settings.'
 
     $n = 0
 
@@ -1084,7 +1084,7 @@ Function Get-IniConfig
             $Path
     )
 
-    Write-Verbose -Message 'Reading configuration file.'
+    Write-Verbose -Message '[Get-IniConfig] Reading configuration file.'
 
     $config = @{}
 

@@ -74,7 +74,7 @@ Function Write-EventAlert
             $TerminatingError
     )
 
-    Write-Verbose -Message 'Writing alert to Event Log.'
+    Write-Verbose -Message '[Write-EventAlert] Writing alert to Event Log.'
 
     $eventProperties = @{
                         'LogName'     = $IniConfig.WinEvent.Logname
@@ -133,7 +133,7 @@ Function Send-SmtpAlert
             $TerminatingError
     )
 
-    Write-Verbose -Message 'Sending alert via SMTP.'
+    Write-Verbose -Message '[Send-SmtpAlert] Sending alert via SMTP.'
 
     $emailSplat = @{
                         'To'          = $IniConfig.Smtp.To

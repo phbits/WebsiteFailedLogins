@@ -16,7 +16,7 @@ Function Get-FailedLoginsPerIP
         $IniConfig
     )
 
-    Write-Verbose -Message 'Starting FailedLoginsPerIP.'
+    Write-Verbose -Message '[Get-FailedLoginsPerIP] Starting FailedLoginsPerIP.'
 
     $returnValue = @{}
 
@@ -111,7 +111,7 @@ Function Get-TotalFailedLogins
         $IniConfig
     )
 
-    Write-Verbose -Message 'Starting TotalFailedLogins.'
+    Write-Verbose -Message '[Get-TotalFailedLogins] Starting TotalFailedLogins.'
 
     $returnValue = @{}
 
