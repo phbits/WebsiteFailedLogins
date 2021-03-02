@@ -23,6 +23,8 @@ Function Submit-Alert
             $TerminatingError
     )
 
+    Write-Verbose -Message '[Submit-Alert] Processing alert.'
+
     if ($IniConfig.Alert.Method -imatch 'WinEvent')
     {
         if ($TerminatingError -eq $true)
@@ -76,13 +78,16 @@ Function Write-EventAlert
 
     Write-Verbose -Message '[Write-EventAlert] Writing alert to Event Log.'
 
+    $formattedAlertData = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType `
+                                                 -AlertData $AlertData
+
     $eventProperties = @{
                         'LogName'     = $IniConfig.WinEvent.Logname
                         'Source'      = $IniConfig.WinEvent.Source
                         'EntryType'   = $IniConfig.WinEvent.EntryType
                         'EventId'     = $IniConfig.WinEvent.FailedLoginsPerIPEventId
                         'ErrorAction' = 'Stop'
-                        'Message'     = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
+                        'Message'     = $formattedAlertData
                         }
 
     if ($AlertData.ContainsKey('TotalFailedLogins'))
@@ -135,13 +140,16 @@ Function Send-SmtpAlert
 
     Write-Verbose -Message '[Send-SmtpAlert] Sending alert via SMTP.'
 
+    $formattedAlertData = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType `
+                                                 -AlertData $AlertData
+
     $emailSplat = @{
                         'To'          = $IniConfig.Smtp.To
                         'From'        = $IniConfig.Smtp.From
                         'Subject'     = $IniConfig.Smtp.Subject
                         'SmtpServer'  = $IniConfig.Smtp.Server
                         'Port'        = $IniConfig.Smtp.Port
-                        'Body'        = Get-FormattedAlertData -DataType $IniConfig.Alert.DataType -AlertData $AlertData
+                        'Body'        = $formattedAlertData
                         'UseSsl'      = $true
                         'ErrorAction' = 'Stop'
                     }
@@ -158,7 +166,7 @@ Function Send-SmtpAlert
 
     if ($TerminatingError)
     {
-        $emailSplat.Subject = '[TerminatingError]{0}' -f $emailProperties.Subject
+        $emailSplat.Subject = '[TerminatingError] {0}' -f $IniConfig.Smtp.Subject
     }
 
     if ([System.String]::IsNullOrEmpty($IniConfig.Smtp.CredentialXml) -eq $false)
@@ -198,6 +206,8 @@ Function Get-FormattedAlertData
             $AlertData
     )
 
+    Write-Verbose -Message "[Get-FormattedAlertData] formatting data as $($DataType.ToUpper())."
+
     switch ($DataType.ToUpper())
     {
         'XML' {
@@ -209,7 +219,7 @@ Function Get-FormattedAlertData
         }
 
         default { # Text
-                [string[]] $stringData = $AlertData.Keys | ForEach-Object{ "($_) = $($AlertData[$($_)])" }
+                [string[]] $stringData = $AlertData.Keys | ForEach-Object{ "$($_) = $($AlertData[$($_)])" }
                 return $($stringData -Join [System.Environment]::NewLine)
         }
     }
