@@ -88,7 +88,7 @@ function Invoke-Logparser
     )
 
     try {
-        # Use System.Diagnostics.Process to process the auditpol command
+        # Use System.Diagnostics.Process to process the logparser command
         $process = New-Object System.Diagnostics.Process
         $process.StartInfo.Arguments = $($Switches + $Query)
         $process.StartInfo.CreateNoWindow = $true
@@ -106,12 +106,15 @@ function Invoke-Logparser
     }
     catch {
         $e = $_
-        # Catch the error thrown if the lastexitcode is not 0
-        [string] $errorString = "`n EXCEPTION:    $($e.Exception.Message)" + `
-                                "`n LASTEXITCODE: $LASTEXITCODE" + `
-                                "`n COMMAND:      $Path $logparserArguments"
 
-        Write-Error -Message $errorString
+        [string[]] $errorMessage = @()
+
+        $errorMessage += '[WebsiteFailedLogins][Invoke-Logparser] EXCEPTION: {0}' -f $e.Exception.Message
+        $errorMessage += '[WebsiteFailedLogins][Invoke-Logparser] LASTEXITCODE: {0}' -f $LASTEXITCODE
+        $errorMessage += '[WebsiteFailedLogins][Invoke-Logparser] COMMAND:'
+        $errorMessage += '     {0} {1} {2}' -f $Path,$($Switches -join ' '),$Query
+
+        Write-Error -Message $($errorMessage -join [System.Environment]::NewLine)
     }
 
     return $logparserReturn

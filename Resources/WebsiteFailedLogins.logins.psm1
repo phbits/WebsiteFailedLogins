@@ -81,18 +81,24 @@ Function Get-FailedLoginsPerIPResult
         $FailedLogins
     )
 
-    return @{
-                'FriendlyName'   = $IniConfig.Website.FriendlyName
-                'ClientIP'       = $ClientIP
-                'FailedLogins'   = $FailedLogins
-                'Sitename'       = $IniConfig.Website.Sitename
-                'IISLogPath'     = $IniConfig.Website.LogPath
-                'Authentication' = $IniConfig.Website.Authentication
-                'HttpResponse'   = $IniConfig.Website.HttpResponse
-                'UrlPath'        = $IniConfig.Website.UrlPath
-                'Start'          = $IniConfig.Website.StartTimeTSZ
-                'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
-            }
+    $returnValue = @{
+                        'FriendlyName'   = $IniConfig.Website.FriendlyName
+                        'ClientIP'       = $ClientIP
+                        'FailedLogins'   = $FailedLogins
+                        'Sitename'       = $IniConfig.Website.Sitename
+                        'IISLogPath'     = $IniConfig.Website.LogPath
+                        'Authentication' = $IniConfig.Website.Authentication
+                        'HttpResponse'   = $IniConfig.Website.HttpResponse
+                        'Start'          = $IniConfig.Website.StartTimeTSZ
+                        'End~'           = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+                    }
+
+    if ($IniConfig.Website.Authentication -imatch 'Forms')
+    {
+        $returnValue.Add('UrlPath', $IniConfig.Website.UrlPath)
+    }
+
+    return $returnValue
 
 } # End Function Get-FailedLoginsPerIPResult
 
@@ -115,7 +121,7 @@ Function Get-TotalFailedLogins
 
     $returnValue = @{}
 
-    [Int] $totalHits = 0
+    [Int] $totalFailedLogins = 0
 
     $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
 
@@ -125,21 +131,25 @@ Function Get-TotalFailedLogins
 
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
     {
-        if ([System.Int32]::TryParse($logparserResult, [ref] $totalHits))
+        if ([System.Int32]::TryParse($logparserResult, [ref] $totalFailedLogins))
         {
-            if ($totalHits -ge $IniConfig.Website.TotalFailedLogins)
+            if ($totalFailedLogins -ge $IniConfig.Website.TotalFailedLogins)
             {
                 $returnValue = @{
                                     'FriendlyName'      = $IniConfig.Website.FriendlyName
-                                    'TotalFailedLogins' = $totalHits
+                                    'TotalFailedLogins' = $totalFailedLogins
                                     'Sitename'          = $IniConfig.Website.Sitename
                                     'IISLogPath'        = $IniConfig.Website.LogPath
                                     'Authentication'    = $IniConfig.Website.Authentication
                                     'HttpResponse'      = $IniConfig.Website.HttpResponse
-                                    'UrlPath'           = $IniConfig.Website.UrlPath
                                     'Start'             = $IniConfig.Website.StartTimeTSZ
                                     'End~'              = "$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
                                 }
+
+                if ($IniConfig.Website.Authentication -imatch 'Forms')
+                {
+                    $returnValue.Add('UrlPath', $IniConfig.Website.UrlPath)
+                }
             }
         }
     }

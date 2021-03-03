@@ -9,20 +9,24 @@ This PowerShell module was created to identify the following scenarios affecting
 
 It leverages Microsoft Logparser and a configuration file to parse the target website's IIS logs. When a threshold is met or exceeded an alert is generated via standard out, email, and/or written to a Windows Event Log. No changes are needed on the webserver. This module can even run on a separate system where there's access to the IIS logs.
 
+Detailed information available at: https://github.com/phbits/WebsiteFailedLogins/wiki
 
-# Prerequisites #
+
+## Prerequisites ##
+
+The following are prerequisites needing to be addressed to run this module.
 
 
-## Logparser ##
+### Logparser ###
 
-This module only needs access to `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
+WebsiteFailedLogins only needs access to `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
 
 Place these two files in an accessible folder and update the configuration file with this folder path.
 
 Download URL: https://www.microsoft.com/en-us/download/details.aspx?id=24659
 
 
-## IIS Logging ##
+### IIS Logging ###
 
 IIS must log using the W3C format and include the following fields.
 
@@ -34,6 +38,10 @@ IIS must log using the W3C format and include the following fields.
 - `cs-uri-stem`
 - `sc-status`
 
+Logparser will search recursively so specify the parent folder in the configuration file.
+
+Parsing logs has the greatest impact on performance. See the following link for details: https://github.com/phbits/WebsiteFailedLogins/wiki/Performance
+
 
 ## Permissions ##
 
@@ -42,8 +50,13 @@ Permissions required to run this module are as follows.
 
 ### Administrator ###
 
-There is one instance where Administrator permission is needed and that is to register a new Source in the Application Event Log.
-This is only necessary if using WinEvent as the Alert Method. Once the source is registered, Administrator permission is no longer needed.
+Only necessary if using WinEvent as an Alert Method where alerts are written to the Application Event Log.
+
+Administrator permission is needed to register a new Source in the Application Event Log. Once the source is registered, Administrator permission is no longer needed. The command to register WebsiteFailedLogins as a source is as follows.
+
+```powershell
+New-EventLog -LogName Application -Source WebsiteFailedLogins
+```
 
 
 ### Standard User ###
@@ -57,14 +70,13 @@ A standard user has enough permission to run this module as long as the followin
 
 # Configuration File Settings #
 
-The WebsiteFailedlogins module uses a configuration file. Each setting is described in detail below. 
+WebsiteFailedlogins uses a configuration file. Each setting is described in detail below. See the [wiki](https://github.com/phbits/WebsiteFailedLogins/wiki) for even more information.
 
 There are two functions in this module used for working with the default configuration file.
 
 - `Get-WebsiteFailedLoginsDefaultConfiguration` - returns the content of the default configuration file to standard out.
 - `Copy-WebsiteFailedLoginsDefaultConfiguration` - copies the default configuration file to the destination folder.
 
-The following sections will better describe each of the settings.
 
 ## [Website] Sitename ##
 
@@ -72,7 +84,7 @@ The sitename of a website is logged in the IIS log field `s-sitename`. This valu
 
 The PowerShell cmdlet `Get-IISSite` will show the ID for each website. That ID can be appended to W3SVC to create the sitename.
 
-> EXAMPLE: website with ID=1 would have sitename=w3svc1
+> EXAMPLE: website with `ID=1` would have `sitename=w3svc1`
 
 
 ## [Website] Authentication ##
@@ -102,7 +114,7 @@ Since implementations of Forms Authentication can vary, specifying the URL path 
 
 ## [Website] LogPath ##
 
-Folder containing the IIS logs for the target website. For best performance archive old logs so they no longer reside in this directory. This is because Logparser will check every log in the specified folder and will incur a significant performance hit if there are gigabytes upon gigabytes of logs.
+Folder containing the IIS logs for the target website. For best performance archive old logs so they no longer reside in this directory. Logparser will recursively check every log file in the specified folder and will incur a significant performance hit if there are gigabytes upon gigabytes of logs.
 
 
 ## [Website] FailedLoginsPerIP ##
@@ -119,16 +131,16 @@ The total number of failed logins having occurred since the `StartTime` that wil
 
 Number of seconds from when the script is launched to establish the `StartTime`. Any requests from that point forward will be included.
 
-Since IIS logs via UTC, that timezone is used for this module.
+Since IIS logs use UTC, all time in this module is also in UTC.
 
-> EXAMPLE: if the window is 1800 seconds (30 minutes), `StartTime` will be calculated using: 
-> 
+> EXAMPLE: if this value is set to `1800` (30 minutes), `StartTime` will be calculated using:
+>
 >	`(Get-Date).ToUniversalTime().AddSeconds(-1800)`
 
 
 ## [Logparser] Path ##
 
-This module only needs access to `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
+WebsiteFailedLogins only needs access to `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
 
 Place these two files in an accessible folder and update the configuration file with this folder path.
 
@@ -139,9 +151,9 @@ Download URL: https://www.microsoft.com/en-us/download/details.aspx?id=24659
 
 Standard out will always be used even if no value is specified. Choosing both Smtp and WinEvent will enable both methods or just include one.
 
-- Standard Out - Always enabled. Will return any alerts to the prompt.
 - Smtp - Send an email based on the `[SMTP]` settings.
 - WinEvent - Write an event based on the `[WinEvent]` settings.
+- None - Only use standard out.
 
 
 ## [Alert] DataType ##
@@ -186,7 +198,6 @@ Optional setting. XML file containing PSCredential for SMTP authentication. Leav
 
 To create this file run the following command using the account that will be launching this module.
 
-
 ```powershell
 Get-Credential | Export-Clixml -Path <CredentialXmlPath>
 ```
@@ -206,10 +217,9 @@ Available options are: Error, FailureAudit, Information, SuccessAudit, Warning
 
 ## [WinEvent] Source ##
 
-Name of the application that generated this event. 
+Name of the application that generated this event.
 
 By default, WebsiteFailedLogins will not be registered. Doing so requires Administrative permission and can be achieved via the following command.
-
 
 ```powershell
 New-EventLog -LogName Application -Source WebsiteFailedLogins
@@ -237,7 +247,7 @@ The shortest reoccurrence one should use with this module is 5 minutes. If a sho
 
 The greatest performance impact on this module is providing Logparser gigabytes upon gigabytes of logs since they will all be checked. Practice good log maintenance by placing older logs in an archive. Doing so will greatly improve performance.
 
-Once the configuration file has been finalized and no longer produces errors, consider running `Invoke-WebsiteFailedLogins` with the `-RunningConfig` switch. Doing so will exclude validation checks against the configuration file and only perform the necessary operations of massaging various settings.
+Once the configuration file has been finalized and no longer produces errors, consider running `Invoke-WebsiteFailedLogins` with the `-RunningConfig` switch. Doing so will exclude nearly all validation checks against the configuration file making it run significantly faster.
 
 
 
@@ -245,46 +255,39 @@ Once the configuration file has been finalized and no longer produces errors, co
 
 Invoke-WebsiteFailedLogins returns an object containing all of the results and will make integration even easier. Whereas before the focus was on Event ID triggers, now custom scripts can be used as wrappers to take any desired action.
 
-```
-[Returned-Object]
-	FailedLoginsPerIP <array> - each item of the array is a FailedLoginsPerIP hashtable.
-	TotalFailedLogins <hashtable> - TotalFailedLogins hashtable.
-	HasError <boolean> - signifies if an error occurred.
-	HasResults <boolean> - sigifies if there are any results.
-	Configuration <hashtable> - original configuration after being massaged by the module.
-	ErrorMessages <array> - string array of error messages.
-
-[FailedLoginsPerIP]
-	ClientIP
-    FailedLogins
-    Sitename
-    IISLogPath
-    Authentication
-    HttpResponse
-    UrlPath
-    Start
-    End~
-
-[TotalFailedLogins]
-	TotalFailedLogins
-    Sitename
-    IISLogPath
-    Authentication
-    HttpResponse
-    UrlPath
-    Start
-    End~
+```powershell
+[Returned-Object] - System.Collections.Hashtable
+	<key FailedLoginsPerIP><value hashtable> # FailedLoginsPerIP hashtable.
+		<key ClientIP><value hashtable>
+	      	<key ClientIP>		<value string>
+			<key FailedLogins>	<value string>
+			<key Sitename>		<value string>
+			<key IISLogPath>	<value string>
+			<key Authentication><value string>
+			<key HttpResponse>	<value string>
+			<key UrlPath>		<value string>
+			<key Start>			<value string>
+			<key End~>			<value string>
+	<key TotalFailedLogins><value hashtable> # TotalFailedLogins hashtable.
+		<key TotalFailedLogins>	<value string>
+		<key Sitename>			<value string>
+		<key IISLogPath>		<value string>
+		<key Authentication>	<value string>
+		<key HttpResponse>		<value string>
+		<key UrlPath>			<value string>
+		<key Start>				<value string>
+		<key End~>				<value string>
+	<key HasError><value boolean> # signifies if an error occurred.
+	<key HasResults><value boolean> # sigifies if there are any results.
+	<key Configuration><value hashtable> # original configuration after being massaged by the module.
+		<key >
+	<key ErrorMessages><value array> # string array of error messages.
 ```
 
 
 # Taking Action #
 
-This module will only generate an alert and return any results. This is because taking action has many nuances as described below.
-
-1. Blocking and/or rate limiting an IP address is a judgement call based on the application being protected and technology used. Should it be addressed at the website? Server/VIP? Perimeter? Other?
-2. Allowing formerly blocked and/or rate limited IP addresses is also a judgement call unique to the application being protected and technology used.
-3. Automated vulnerability scanners and/or status monitors may trigger thresholds and need to remain unblocked.
-4. The Event and/or Email alert can be easily incorporated into an organization's helpdesk ticketing system or monitoring system. Yet either of these can vary greatly between environments.
+This module will only generate an alert and return any results. This is because taking action has many nuances as described here: https://github.com/phbits/WebsiteFailedLogins/wiki/Taking-Action
 
 
 
@@ -295,11 +298,11 @@ The following are potential issues one should be aware of when implementing this
 
 ## Basic or Windows Authentication ##
 
-1. Identifying failed logins when Basic or Windows authentication is used requires checking the HTTP response code only. A user is not redirected to a logon page such is the case when using Forms authentication. Thus, a client can initiate the logon process by requesting any resource within the website/application. If this same website/application has a resource secured to a smaller subset of users, an already authenticated user could trigger an alert by attempting to access the more secure resource they don't have permission to view. 
+1. Identifying failed logins when Basic or Windows authentication is used requires checking the HTTP response code only. A user is not redirected to a logon page such is the case when using Forms authentication. Thus, a client can initiate the logon process by requesting any resource within the website/application. If this same website/application has a resource secured to a smaller subset of users, an already authenticated user could trigger an alert by attempting to access the more secure resource they don't have permission to view.
 
-	> EXAMPLE: suppose a website requires an authenticated user. This same website has a folder '/Management' which should only be accessible by those in the Management group. A non-management authenticated user will get an HTTP 401 when requesting a resource in that directory. Repeated attempts to '/Management' could trigger an alert.
+> EXAMPLE: suppose a website requires an authenticated user. This same website has a folder '/Management' which has stricter permissions; only accessible by those in the Management group. A non-management authenticated user will get an HTTP 401 when requesting a resource in that directory. Repeated requests to '/Management', for an image or similar resource, could trigger an alert.
 
-2. Another scenario is an HTTP client that doesn't recognize the authentication header. Thereby making request after request resulting in an HTTP 401 and the `cs-username` being logged as `NULL`. 
+2. Another scenario is an HTTP client that doesn't recognize the authentication header. Thereby making request after request resulting in an HTTP 401 and the `cs-username` being logged as `NULL`.
 
 
 # Investigating Results #
@@ -316,16 +319,15 @@ When a ClientIP has met or exceeded the `FailedLoginsPerIP` threshold, a great f
 
 Suppose this alert was identified by WebsiteFailedLogins.
 
-```
+```ini
 ClientIP = 10.1.1.10
 FailedLogins = 100
 Sitename = W3SVC2
-IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\*
+IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\
 Authentication = Windows
 HttpResponse = 401
-UrlPath = /login.aspx
-Start = 2019-01-01 18:30:00
-End ~ 2019-01-01 19:00:10
+Start = 2019-01-01T18:30:00Z
+End~ = 2019-01-01T19:00:10Z
 ```
 
 
@@ -333,30 +335,30 @@ End ~ 2019-01-01 19:00:10
 
 1. Update the following Logparser query with settings from the alert.
 
-	Save it as `ClientIPRequests.sql`.
+Save it as `ClientIPRequests.sql`.
 
-
-		-- Start ClientIPRequests.sql --
-		SELECT * 
-		INTO ResultsFile.csv 
-		FROM 'D:\inetpub\logs\LogFiles\W3SVC2\*'
-		WHERE s-sitename LIKE 'W3SVC2' 
-			AND c-ip LIKE '10.1.1.10'
-			AND TO_LOCALTIME(TO_TIMESTAMP(date,time)) 
-				BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss') 
-				AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
-		-- End ClientIPRequests.sql --
-
+```sql
+-- Start ClientIPRequests.sql --
+SELECT *
+INTO ResultsFile.csv
+FROM 'D:\inetpub\logs\LogFiles\W3SVC2\*'
+WHERE s-sitename LIKE 'W3SVC2'
+	AND c-ip LIKE '10.1.1.10'
+	AND TO_TIMESTAMP(date,time)
+		BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss')
+		AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
+-- End ClientIPRequests.sql --
+```
 
 2. Run the query using the following command.
 
-
-		logparser.exe -i:IISW3C -o:CSV file:ClientIPRequests.sql
-
+```
+logparser.exe -i:IISW3C -o:CSV file:ClientIPRequests.sql
+```
 
 3. Review the results in `ResultsFile.csv`. See Additional Information section below for things to look for.
- 
-	> NOTE: IIS logs date/time in UTC while the Logparser query converts it to local time using the function `TO_LOCALTIME`.
+
+> NOTE: IIS logs date/time in UTC while the Logparser query converts it to local time using the function `TO_LOCALTIME`.
 
 
 ## Total Failed Requests ##
@@ -368,15 +370,14 @@ When the total number of failed logins are unusually high, this can be an indica
 
 Suppose the following was identified by WebsiteFailedLogins.
 
-```
+```ini
 TotalFailedLogins = 100
 Sitename = W3SVC2
-IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\*
+IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\
 Authentication = Windows
 HttpResponse = 401
-UrlPath = /login.aspx
-Start = 2019-01-01 18:30:00
-End ~ 2019-01-01 19:00:10
+Start = 2019-01-01T18:30:00Z
+End~ = 2019-01-01T19:00:10Z
 ```
 
 
@@ -384,52 +385,52 @@ End ~ 2019-01-01 19:00:10
 
 1. Update the following Logparser query with settings from the alert based on the authentication being used.
 
-	Save it as `PerIPFailedLogins.sql`.
+Save it as `PerIPFailedLogins.sql`.
 
-	###### Windows or Basic Authentication ######
+###### Windows or Basic Authentication ######
 
+```sql
+-- Start PerIPFailedLogins.sql --
+SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount
+INTO DATAGRID
+FROM 'D:\inetpub\logs\LogFiles\W3SVC2\*'
+WHERE s-sitename LIKE 'W3SVC2'
+	AND sc-status = 401
+	AND TO_TIMESTAMP(date,time)
+		BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss')
+		AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
+GROUP BY ClientIP
+ORDER BY FailedLoginCount DESC
+-- End PerIPFailedLogins.sql --
+```
 
-	    -- Start PerIPFailedLogins.sql --
-	    SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount 
-	    INTO DATAGRID 
-	    FROM 'D:\inetpub\logs\LogFiles\W3SVC2\*'
-	    WHERE s-sitename LIKE 'W3SVC2' 
-	    	AND sc-status = 401
-	    	AND TO_LOCALTIME(TO_TIMESTAMP(date,time)) 
-	    		BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss') 
-	    		AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
-	    GROUP BY ClientIP 
-	    ORDER BY FailedLoginCount DESC
-	    -- End PerIPFailedLogins.sql --
+###### Forms Authentication ######
 
-
-	###### Forms Authentication ######
-
-
-		-- Start PerIPFailedLogins.sql --
-		SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount 
-		INTO DATAGRID 
-		FROM D:\inetpub\logs\LogFiles\W3SVC2\* 
-		WHERE s-sitename LIKE 'W3SVC2' 
-			AND sc-status = 401
-			AND cs-uri-stem LIKE '/login.aspx'
-			AND cs-method LIKE 'POST'
-			AND TO_LOCALTIME(TO_TIMESTAMP(date,time)) 
-				BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss') 
-				AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
-		GROUP BY ClientIP 
-		ORDER BY FailedLoginCount DESC
-		-- End PerIPFailedLogins.sql --
-
+```sql
+-- Start PerIPFailedLogins.sql --
+SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount
+INTO DATAGRID
+FROM D:\inetpub\logs\LogFiles\W3SVC2\*
+WHERE s-sitename LIKE 'W3SVC2'
+	AND sc-status = 401
+	AND cs-uri-stem LIKE '/login.aspx'
+	AND cs-method LIKE 'POST'
+	AND TO_TIMESTAMP(date,time)
+		BETWEEN TIMESTAMP('2019-01-01 18:30:00', 'yyyy-MM-dd HH:mm:ss')
+		AND TIMESTAMP('2019-01-01 19:00:10', 'yyyy-MM-dd HH:mm:ss')
+GROUP BY ClientIP
+ORDER BY FailedLoginCount DESC
+-- End PerIPFailedLogins.sql --
+```
 
 2. Run the query using the following command. The Logparser Datagrid window should pop up with the results.
 
-
-		logparser.exe -i:IISW3C file:PerIPFailedLogins.sql
-
+```
+logparser.exe -i:IISW3C file:PerIPFailedLogins.sql
+```
 
 3. Having identified the involved IP addresses, use the above technique for 'Per IP Entries' to review requests from each Client IP address.
- 
+
 
 ## Additional Information ##
 

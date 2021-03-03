@@ -671,7 +671,7 @@ Function Assert-ValidWinEventSettings
                         if ([System.Int32]::TryParse($IniConfig.WinEvent.FailedLoginsPerIPEventId, [ref] $intFailedLoginsPerIPEventId))
                         {
                             $winEventIdResult = Assert-WinEventId -EventName 'FailedLoginsPerIPEventId' `
-                                                                -EventId $intFailedLoginsPerIPEventId
+                                                                  -EventId $intFailedLoginsPerIPEventId
 
                             if ($winEventIdResult.HasError -eq $true)
                             {
@@ -804,7 +804,7 @@ Function Assert-WinEventId
         }
         default {
 
-            if ($EventId -lt 0 -or $EventId -gt 999)
+            if (-not $($EventId -gt 0 -and $EventId -le 999))
             {
                 $returnValue.ErrorMessages += $('[Error][Config][WinEvent] {0} not valid.' -f $EventName)
             }
@@ -934,18 +934,14 @@ Function Assert-ValidSmtpSettings
 
                         if ([System.Int32]::TryParse($IniConfig.Smtp.Port, [ref] $intPort))
                         {
-                            if ($intPort -gt 0)
+                            if (-not $($intPort -gt 0 -and $intPort -le 65535))
                             {
-                                [int] $IniConfig.Smtp.Port = $intPort
-
-                            } else {
-
-                                $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
+                                $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be 1-65535.'
                             }
 
                         } else {
 
-                            $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be a positive number.'
+                            $returnValue.ErrorMessages += '[Error][Config][SMTP] PORT must be 1-65535.'
                         }
 
                     } else {
