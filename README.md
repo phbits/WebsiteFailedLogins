@@ -253,35 +253,39 @@ Once the configuration file has been finalized and no longer produces errors, co
 
 # Returned Data #
 
-Invoke-WebsiteFailedLogins returns an object containing all of the results and will make integration even easier. Whereas before the focus was on Event ID triggers, now custom scripts can be used as wrappers to take any desired action.
+Invoke-WebsiteFailedLogins returns an object containing the configuration and all results. This allows wrappers to launch the module and do any desired tasks. See [Taking Action](https://github.com/phbits/WebsiteFailedLogins/wiki/Taking-Action) for more information.
+
+The following object is returned by `Invoke-WebsiteFailedLogins`.
 
 ```powershell
-[Returned-Object] - System.Collections.Hashtable
-	<key FailedLoginsPerIP><value hashtable> # FailedLoginsPerIP hashtable.
-		<key ClientIP><value hashtable>
-	      	<key ClientIP>		<value string>
-			<key FailedLogins>	<value string>
-			<key Sitename>		<value string>
-			<key IISLogPath>	<value string>
-			<key Authentication><value string>
-			<key HttpResponse>	<value string>
-			<key UrlPath>		<value string>
-			<key Start>			<value string>
-			<key End~>			<value string>
-	<key TotalFailedLogins><value hashtable> # TotalFailedLogins hashtable.
-		<key TotalFailedLogins>	<value string>
-		<key Sitename>			<value string>
-		<key IISLogPath>		<value string>
-		<key Authentication>	<value string>
-		<key HttpResponse>		<value string>
-		<key UrlPath>			<value string>
-		<key Start>				<value string>
-		<key End~>				<value string>
-	<key HasError><value boolean> # signifies if an error occurred.
-	<key HasResults><value boolean> # sigifies if there are any results.
-	<key Configuration><value hashtable> # original configuration after being massaged by the module.
-		<key >
-	<key ErrorMessages><value array> # string array of error messages.
+[Hashtable] WebsiteFailedLogins
+{
+	<key 'FailedLoginsPerIP'><value [hashtable]>
+		<key '<ClientIP>'><value [hashtable]>
+			<key 'ClientIP'>	<value [string]>
+			<key 'FailedLogins'>	<value [string]>
+			<key 'Sitename'>	<value [string]>
+			<key 'IISLogPath'>	<value [string]>
+			<key 'Authentication'>	<value [string]>
+			<key 'HttpResponse'>	<value [string]>
+			<key 'UrlPath'>		<value [string]>
+			<key 'Start'>		<value [string]>
+			<key 'End~'>		<value [string]>
+	<key 'TotalFailedLogins'><value [hashtable]>
+		<key 'TotalFailedLogins'>	<value [string]>
+		<key 'Sitename'>		<value [string]>
+		<key 'IISLogPath'>		<value [string]>
+		<key 'Authentication'>		<value [string]>
+		<key 'HttpResponse'>		<value [string]>
+		<key 'UrlPath'>			<value [string]>
+		<key 'Start'>			<value [string]>
+		<key 'End~'>			<value [string]>
+	<key 'HasError'><value [boolean]> # indicates if an error occurred.
+	<key 'HasResults'><value [boolean]> # indicates if there are results.
+	<key 'Configuration'><value [hashtable]> # configuration from ini file
+		<key [string]><value [hashtable]>
+	<key 'ErrorMessages'><value [object[]]> # array of error messages.
+}
 ```
 
 
@@ -323,7 +327,7 @@ Suppose this alert was identified by WebsiteFailedLogins.
 ClientIP = 10.1.1.10
 FailedLogins = 100
 Sitename = W3SVC2
-IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\
+IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2
 Authentication = Windows
 HttpResponse = 401
 Start = 2019-01-01T18:30:00Z
@@ -353,7 +357,7 @@ WHERE s-sitename LIKE 'W3SVC2'
 2. Run the query using the following command.
 
 ```
-logparser.exe -i:IISW3C -o:CSV file:ClientIPRequests.sql
+logparser.exe -recurse:-1 -i:IISW3C -o:CSV file:ClientIPRequests.sql
 ```
 
 3. Review the results in `ResultsFile.csv`. See Additional Information section below for things to look for.
@@ -373,7 +377,7 @@ Suppose the following was identified by WebsiteFailedLogins.
 ```ini
 TotalFailedLogins = 100
 Sitename = W3SVC2
-IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2\
+IISLogPath = D:\inetpub\logs\LogFiles\W3SVC2
 Authentication = Windows
 HttpResponse = 401
 Start = 2019-01-01T18:30:00Z
@@ -426,7 +430,7 @@ ORDER BY FailedLoginCount DESC
 2. Run the query using the following command. The Logparser Datagrid window should pop up with the results.
 
 ```
-logparser.exe -i:IISW3C file:PerIPFailedLogins.sql
+logparser.exe -recurse:-1 -i:IISW3C file:PerIPFailedLogins.sql
 ```
 
 3. Having identified the involved IP addresses, use the above technique for 'Per IP Entries' to review requests from each Client IP address.
