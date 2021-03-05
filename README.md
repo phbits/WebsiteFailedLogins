@@ -19,9 +19,9 @@ The following are prerequisites needing to be addressed to run this module.
 
 ### Logparser ###
 
-WebsiteFailedLogins only needs access to `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
+WebsiteFailedLogins only needs access to a folder containing `Logparser.exe` and `Logparser.dll`. A full installation is unnecessary but will still work.
 
-Place these two files in an accessible folder and update the configuration file with this folder path.
+Place these two files in an accessible folder and update the configuration file with this folder path. The user running this module must have sufficient permission to launch Logparser.exe.
 
 Download URL: https://www.microsoft.com/en-us/download/details.aspx?id=24659
 
@@ -38,9 +38,9 @@ IIS must log using the W3C format and include the following fields.
 - `cs-uri-stem`
 - `sc-status`
 
-Logparser will search recursively so specify the parent folder in the configuration file.
+Logparser will perform a recursive search so specify the parent folder in the configuration file.
 
-Parsing logs has the greatest impact on performance. See the following link for details: https://github.com/phbits/WebsiteFailedLogins/wiki/Performance
+While Logparser is very fast, the amount of logs it must parse will be the greatest impact on performance. See the following link for details: https://github.com/phbits/WebsiteFailedLogins/wiki/Performance
 
 
 ## Permissions ##
@@ -262,24 +262,24 @@ The following object is returned by `Invoke-WebsiteFailedLogins`.
 {
 	<key 'FailedLoginsPerIP'><value [hashtable]>
 		<key '<ClientIP>'><value [hashtable]>
-			<key 'ClientIP'>	<value [string]>
+			<key 'ClientIP'>		<value [string]>
 			<key 'FailedLogins'>	<value [string]>
-			<key 'Sitename'>	<value [string]>
-			<key 'IISLogPath'>	<value [string]>
+			<key 'Sitename'>		<value [string]>
+			<key 'IISLogPath'>		<value [string]>
 			<key 'Authentication'>	<value [string]>
 			<key 'HttpResponse'>	<value [string]>
-			<key 'UrlPath'>		<value [string]>
-			<key 'Start'>		<value [string]>
-			<key 'End~'>		<value [string]>
+			<key 'UrlPath'>			<value [string]>
+			<key 'Start'>			<value [string]>
+			<key 'End~'>			<value [string]>
 	<key 'TotalFailedLogins'><value [hashtable]>
 		<key 'TotalFailedLogins'>	<value [string]>
-		<key 'Sitename'>		<value [string]>
-		<key 'IISLogPath'>		<value [string]>
+		<key 'Sitename'>			<value [string]>
+		<key 'IISLogPath'>			<value [string]>
 		<key 'Authentication'>		<value [string]>
 		<key 'HttpResponse'>		<value [string]>
-		<key 'UrlPath'>			<value [string]>
-		<key 'Start'>			<value [string]>
-		<key 'End~'>			<value [string]>
+		<key 'UrlPath'>				<value [string]>
+		<key 'Start'>				<value [string]>
+		<key 'End~'>				<value [string]>
 	<key 'HasError'><value [boolean]> # indicates if an error occurred.
 	<key 'HasResults'><value [boolean]> # indicates if there are results.
 	<key 'Configuration'><value [hashtable]> # configuration from ini file
