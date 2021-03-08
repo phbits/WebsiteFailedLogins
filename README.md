@@ -14,7 +14,7 @@ It leverages Microsoft Logparser and a configuration file to parse the target we
 
 ## Prerequisites ##
 
-The following are prerequisites needing to be addressed to run this module.
+Logparser and IIS log fields are the two prerequisites for this module.
 
 
 ### Logparser ###
@@ -50,7 +50,7 @@ Permissions required to run this module are as follows.
 
 ### Administrator ###
 
-Only necessary if using WinEvent as an Alert Method where alerts are written to the Application Event Log.
+Only necessary if using WinEvent as an Alert Method; where alerts are written to the Application Event Log.
 
 Administrator permission is needed to register a new Source in the Application Event Log. Once the source is registered, Administrator permission is no longer needed. The command to register WebsiteFailedLogins as a source is as follows.
 
@@ -261,31 +261,31 @@ The following object is returned by `Invoke-WebsiteFailedLogins`.
 ```powershell
 [Hashtable] WebsiteFailedLogins
 {
-	<key 'FailedLoginsPerIP'><value [hashtable]>
-		<key '<ClientIP>'><value [hashtable]> # The key is the actual ClientIP
-			<key 'ClientIP'>		<value [string]>
-			<key 'FailedLogins'>	<value [string]>
-			<key 'Sitename'>		<value [string]>
-			<key 'IISLogPath'>		<value [string]>
-			<key 'Authentication'>	<value [string]>
-			<key 'HttpResponse'>	<value [string]>
-			<key 'UrlPath'>			<value [string]>
-			<key 'Start'>			<value [string]>
-			<key 'End~'>			<value [string]>
-	<key 'TotalFailedLogins'><value [hashtable]>
-		<key 'TotalFailedLogins'>	<value [string]>
-		<key 'Sitename'>			<value [string]>
-		<key 'IISLogPath'>			<value [string]>
-		<key 'Authentication'>		<value [string]>
-		<key 'HttpResponse'>		<value [string]>
-		<key 'UrlPath'>				<value [string]>
-		<key 'Start'>				<value [string]>
-		<key 'End~'>				<value [string]>
-	<key 'HasError'><value [boolean]> # indicates if an error occurred.
-	<key 'HasResults'><value [boolean]> # indicates if there are results.
-	<key 'Configuration'><value [hashtable]> # configuration from ini file
-		<key [string]><value [hashtable]>
-	<key 'ErrorMessages'><value [object[]]> # array of error messages.
+  <key 'FailedLoginsPerIP'><value [hashtable]>
+    <key '<ClientIP>'><value [hashtable]> # The key is the actual ClientIP
+      <key 'ClientIP'>       <value [string]>
+      <key 'FailedLogins'>   <value [string]>
+      <key 'Sitename'>       <value [string]>
+      <key 'IISLogPath'>	 <value [string]>
+      <key 'Authentication'> <value [string]>
+      <key 'HttpResponse'>   <value [string]>
+      <key 'UrlPath'>        <value [string]>
+      <key 'Start'>          <value [string]>
+      <key 'End~'>           <value [string]>
+  <key 'TotalFailedLogins'><value [hashtable]>
+    <key 'TotalFailedLogins'> <value [string]>
+    <key 'Sitename'>          <value [string]>
+    <key 'IISLogPath'>        <value [string]>
+    <key 'Authentication'>    <value [string]>
+    <key 'HttpResponse'>      <value [string]>
+    <key 'UrlPath'>           <value [string]>
+    <key 'Start'>             <value [string]>
+    <key 'End~'>              <value [string]>
+  <key 'HasError'><value [boolean]> # indicates if an error occurred.
+  <key 'HasResults'><value [boolean]> # indicates if there are results.
+  <key 'Configuration'><value [hashtable]> # configuration from ini file
+    <key [string]><value [hashtable]>
+  <key 'ErrorMessages'><value [object[]]> # array of error messages.
 }
 ```
 
