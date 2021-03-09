@@ -141,7 +141,7 @@ Function Get-LogparserTotalFailedIpCountQuery
         $IniConfig
     )
 
-    [string] $returnQuery = 'SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount '
+    [string] $returnQuery = '"SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount '
     $returnQuery += "FROM '{0}' " -f $IniConfig.Logparser.LogPath
     $returnQuery += "WHERE s-sitename LIKE '{0}' " -f $IniConfig.Website.Sitename
     $returnQuery += 'AND sc-status = {0} ' -f $IniConfig.Website.HttpResponse
@@ -153,7 +153,7 @@ Function Get-LogparserTotalFailedIpCountQuery
 
     $returnQuery += "AND TO_TIMESTAMP(date,time) >= TO_TIMESTAMP('{0}','yyyy-MM-dd HH:mm:ss') " -f $IniConfig.Website.StartTimeTS
 
-    $returnQuery += 'GROUP BY ClientIP ORDER BY FailedLoginCount DESC'
+    $returnQuery += 'GROUP BY ClientIP ORDER BY FailedLoginCount DESC"'
 
     return $returnQuery
 
