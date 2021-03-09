@@ -16,7 +16,7 @@ It leverages Microsoft Logparser and a configuration file to parse the target we
 
 Logparser and IIS log fields are the two prerequisites for this module.
 
-There is significant error checking to ensure success. When all errors have been resolved, use the `-RunningConfig` switch. This assumes `Invoke-WebsiteFailedLogins` will run error free and limits error checking to just a few.
+There is significant error checking to ensure success. When all errors have been resolved, use the `-RunningConfig` switch. This assumes `Invoke-WebsiteFailedLogins` will run error free and limits operations to a required few.
 
 
 ### Logparser ###
@@ -163,7 +163,7 @@ Standard out will always be used even if no value is specified. Choosing both Sm
 
 ## [Alert] DataType ##
 
-Alert data can be provided in different formats making it easier to work with.
+Only necessary if using Smtp or WinEvent as an Alert Method. Formatting the alert data can help integrate with internal systems.
 
 - text - Similar to the configuration file (ini) with one key/value pair on each line.
 - xml - Alert data can be deserialized into an object using: [System.Management.Automation.PSSerializer]::Deserialize()
@@ -278,6 +278,8 @@ The following object is returned by `Invoke-WebsiteFailedLogins`.
       <key 'End~'>           <value [string]>
   <key 'TotalFailedLogins'><value [hashtable]>
     <key 'TotalFailedLogins'> <value [string]>
+    <key 'ClientIpList'>      <value [hashtable]>
+      <key '<ClientIP>'><value [string]'FailedLoginCount'> # The key is the actual ClientIP
     <key 'Sitename'>          <value [string]>
     <key 'IISLogPath'>        <value [string]>
     <key 'Authentication'>    <value [string]>

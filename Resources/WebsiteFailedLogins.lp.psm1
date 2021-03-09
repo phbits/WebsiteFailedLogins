@@ -121,4 +121,42 @@ function Invoke-Logparser
 
 } # end function Invoke-Logparser
 
-Export-ModuleMember -Function 'Get-LogparserQuery','Invoke-Logparser'
+Function Get-LogparserTotalFailedIpCountQuery
+{
+    <#
+        .SYNOPSIS
+
+            Returns a Log parser query to find the failed login count for each unique IP address.
+
+        .DESCRIPTION
+
+            When TotalFailedLogins threshold is met or exceeded, this query will return the IP addresses involved and the number of failed logins attributed to them.
+    #>
+    [CmdletBinding()]
+    [OutputType('System.String')]
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Hashtable]
+        # INI Configuration.
+        $IniConfig
+    )
+
+    [string] $returnQuery = 'SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount '
+    $returnQuery += "FROM '{0}' " -f $IniConfig.Logparser.LogPath
+    $returnQuery += "WHERE s-sitename LIKE '{0}' " -f $IniConfig.Website.Sitename
+    $returnQuery += 'AND sc-status = {0} ' -f $IniConfig.Website.HttpResponse
+
+    if ($IniConfig.Website.Authentication -imatch 'Forms')
+    {
+        $returnQuery += "AND cs-uri-stem LIKE '{0}' AND cs-Method LIKE 'POST' " -f $IniConfig.Website.UrlPath
+    }
+
+    $returnQuery += "AND TO_TIMESTAMP(date,time) >= TO_TIMESTAMP('{0}','yyyy-MM-dd HH:mm:ss') " -f $IniConfig.Website.StartTimeTS
+
+    $returnQuery += 'GROUP BY ClientIP ORDER BY FailedLoginCount DESC'
+
+    return $returnQuery
+
+} # End Function Get-LogparserTotalFailedIpCountQuery
+
+Export-ModuleMember -Function 'Get-LogparserQuery','Invoke-Logparser','Get-LogparserTotalFailedIpCountQuery'

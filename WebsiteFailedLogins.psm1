@@ -95,6 +95,10 @@ Function Invoke-WebsiteFailedLogins
 
         $returnValue.Configuration.Logparser.Add('TotalFailedLoginsQuery',$lpQuery)
 
+        $lpQuery = Get-LogparserTotalFailedIpCountQuery -IniConfig $returnValue.Configuration
+
+        $returnValue.Configuration.Logparser.Add('TotalFailedIpCountQuery',$lpQuery)
+
         $returnValue.TotalFailedLogins = Get-TotalFailedLogins -IniConfig $returnValue.Configuration
 
         if ($returnValue.TotalFailedLogins.Count -gt 0)

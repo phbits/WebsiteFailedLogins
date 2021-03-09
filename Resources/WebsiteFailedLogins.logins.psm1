@@ -135,9 +135,12 @@ Function Get-TotalFailedLogins
         {
             if ($totalFailedLogins -ge $IniConfig.Website.TotalFailedLogins)
             {
+                $failedLoginCount = Get-TotalFailedLoginCount -IniConfig $IniConfig
+
                 $returnValue = @{
                                     'FriendlyName'      = $IniConfig.Website.FriendlyName
                                     'TotalFailedLogins' = $totalFailedLogins
+                                    'ClientIpList'      = $failedLoginCount
                                     'Sitename'          = $IniConfig.Website.Sitename
                                     'IISLogPath'        = $IniConfig.Website.LogPath
                                     'Authentication'    = $IniConfig.Website.Authentication
@@ -157,5 +160,54 @@ Function Get-TotalFailedLogins
     return $returnValue
 
 } # End Function Get-TotalFailedLogins
+
+Function Get-TotalFailedLoginCount
+{
+    <#
+        .SYNOPSIS
+            Gets the total failed login count of IP addresses that cumulatively meet or exceed the TotalFailedLogins threshold.
+    #>
+    [CmdletBinding()]
+    [OutputType('System.Collections.Hashtable')]
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Hashtable]
+        # INI Configuration.
+        $IniConfig
+    )
+
+    Write-Verbose -Message '[Get-TotalFailedLoginCount] Starting TotalFailedLoginCount.'
+
+    $returnValue = @{}
+
+    $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
+
+    [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
+                                                 -Query $IniConfig.Logparser.TotalFailedIpCountQuery `
+                                                 -Switches $logparserArgs
+
+    if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
+    {
+        $resultsObj = $logparserResults | ConvertFrom-Csv
+
+        if($resultsObj -is [Array])
+        {
+            foreach ($entry in $resultsObj)
+            {
+                $returnValue.Add($entry.ClientIP, $entry.FailedLoginCount)
+            }
+
+        } else {
+
+            $returnValue.Add($resultsObj.ClientIP, $resultObj.FailedLoginCount)
+        }
+
+    } else {
+
+        Write-Error '[Get-TotalFailedLoginCount] Failed to get Client IP failed login count.'
+    }
+
+    return $returnValue
+}
 
 Export-ModuleMember -Function 'Get-FailedLoginsPerIP','Get-TotalFailedLogins'
