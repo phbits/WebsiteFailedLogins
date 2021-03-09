@@ -188,7 +188,7 @@ Function Get-TotalFailedLoginCount
 
     if ([System.String]::IsNullOrEmpty($logparserResult) -eq $false)
     {
-        $resultsObj = $logparserResults | ConvertFrom-Csv
+        $resultsObj = $logparserResult | ConvertFrom-Csv
 
         if($resultsObj -is [Array])
         {
