@@ -16,6 +16,8 @@ It leverages Microsoft Logparser and a configuration file to parse the target we
 
 Logparser and IIS log fields are the two prerequisites for this module.
 
+There is significant error checking to ensure success. When all errors have been resolved, use the `-RunningConfig` switch. This assumes `Invoke-WebsiteFailedLogins` will run error free and limits error checking to just a few.
+
 
 ### Logparser ###
 
