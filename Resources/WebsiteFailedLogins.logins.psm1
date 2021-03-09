@@ -180,7 +180,7 @@ Function Get-TotalFailedLoginCount
 
     $returnValue = @{}
 
-    $logparserArgs = @('-recurse:-1','-headers:OFF','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
+    $logparserArgs = @('-recurse:-1','-headers:ON','-i:IISW3C','-o:CSV','-q:ON','-stats:OFF')
 
     [string] $logparserResult = Invoke-Logparser -Path $IniConfig.Logparser.ExePath `
                                                  -Query $IniConfig.Logparser.TotalFailedIpCountQuery `
