@@ -71,7 +71,7 @@ A standard user has enough permission to run this module as long as the followin
 
 WebsiteFailedlogins uses a configuration file. Each setting is described in detail below.
 
-See the [wiki](https://github.com/phbits/WebsiteFailedLogins/wiki) for even more information.
+Check out the [wiki](https://github.com/phbits/WebsiteFailedLogins/wiki) for even more information.
 
 There are two functions in this module used for working with the default configuration file.
 
@@ -97,6 +97,8 @@ There are three options for choosing authentication.
 3. Forms - Authentication is handled solely by the website/application. Thus, requiring additional configuration settings to be specified (i.e. `UrlPath`) since not all implementations respond to failed authentication with an HTTP 401.
 
    **WARNING**: Forms authentication must use an HTTP POST (`cs-method`) when submitting login credentials.
+
+If none of these options work, a custom Logparser query maybe needed. Open an [Issue](https://github.com/phbits/WebsiteFailedLogins/issues) to find out.
 
 
 ## [Website] HttpResponse ##
@@ -239,7 +241,7 @@ Event Id used when writing an alert for when the total website failed logins mee
 
 # Scheduling #
 
-There are two ways to launch WebsiteFailedLogins. The first is via Task Scheduler while the other technique is from a wrapper script that is launched via Task Scheduler. See the [wiki - How to Launch](https://github.com/phbits/WebsiteFailedLogins/wiki/How-to-Launch) for more information.
+There are two ways to launch WebsiteFailedLogins. The first is via Task Scheduler while the other technique is from a wrapper script that is launched via Task Scheduler. More information is available on the [wiki: How to Launch](https://github.com/phbits/WebsiteFailedLogins/wiki/How-to-Launch).
 
 Consider using a shorter reoccurrence time then what is set for `StartTime` as this data overlap will provide better calculations.
 
@@ -247,7 +249,7 @@ Consider using a shorter reoccurrence time then what is set for `StartTime` as t
 
 The shortest reoccurrence one should use with this module is 5 minutes. If a shorter window is necessary, consider implementing a real-time monitor via ModSecurity or similar Web Application Firewall (WAF).
 
-The greatest performance impact on this module is providing Logparser gigabytes upon gigabytes of logs since they will all be checked. Practice good log maintenance by placing older logs in an archive. Doing so will greatly improve performance. For more information see: [Wiki - Performance](https://github.com/phbits/WebsiteFailedLogins/wiki/Performance)
+The greatest performance impact on this module is providing Logparser gigabytes upon gigabytes of logs since they will all be checked. Practice good log maintenance by placing older logs in an archive. Doing so will greatly improve performance. For more information read: [Wiki - Performance](https://github.com/phbits/WebsiteFailedLogins/wiki/Performance)
 
 Once the configuration file has been finalized and no longer produces errors, consider running `Invoke-WebsiteFailedLogins` with the `-RunningConfig` switch. Doing so will exclude nearly all validation checks against the configuration file making it run significantly faster.
 
@@ -266,7 +268,7 @@ The following object is returned by `Invoke-WebsiteFailedLogins`.
       <key 'ClientIP'>       <value [string]>
       <key 'FailedLogins'>   <value [string]>
       <key 'Sitename'>       <value [string]>
-      <key 'IISLogPath'>	 <value [string]>
+      <key 'IISLogPath'>     <value [string]>
       <key 'Authentication'> <value [string]>
       <key 'HttpResponse'>   <value [string]>
       <key 'UrlPath'>        <value [string]>
