@@ -141,6 +141,8 @@ Function Get-LogparserTotalFailedIpCountQuery
         $IniConfig
     )
 
+    $minimumThreshold = [System.Math]::Round($(.2 * $IniConfig.Website.TotalFailedLogins))
+
     [string] $returnQuery = '"SELECT DISTINCT c-ip as ClientIP, Count(*) AS FailedLoginCount '
     $returnQuery += "FROM '{0}' " -f $IniConfig.Logparser.LogPath
     $returnQuery += "WHERE s-sitename LIKE '{0}' " -f $IniConfig.Website.Sitename
@@ -153,7 +155,7 @@ Function Get-LogparserTotalFailedIpCountQuery
 
     $returnQuery += "AND TO_TIMESTAMP(date,time) >= TO_TIMESTAMP('{0}','yyyy-MM-dd HH:mm:ss') " -f $IniConfig.Website.StartTimeTS
 
-    $returnQuery += 'GROUP BY ClientIP ORDER BY FailedLoginCount DESC"'
+    $returnQuery += 'GROUP BY ClientIP HAVING FailedLoginCount >= {0} ORDER BY FailedLoginCount DESC"' -f $minimumThreshold
 
     return $returnQuery
 
